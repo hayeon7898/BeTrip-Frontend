@@ -1,6 +1,6 @@
 # BeTrip Frontend
 
-여행 일정 만드는 웹 프론트엔드입니다.
+여행 일정 만드는 웹의 React 기반 프론트엔드입니다.
 
 ## 🛠 기술 스택
 
@@ -17,7 +17,7 @@
 
 ### 설치 및 실행
 
-\`\`\`bash
+```bash
 # 1. 클론
 git clone https://github.com/사용자명/betrip-frontend.git
 cd betrip-frontend
@@ -27,13 +27,13 @@ npm install
 
 # 3. 개발 서버 실행
 npm run dev
-\`\`\`
+```
 
 브라우저에서 http://localhost:5173 접속
 
 ## 📁 폴더 구조
 
-\`\`\`
+```
 src/
   components/   # 재사용 UI 컴포넌트
   pages/        # 라우트별 페이지
@@ -41,7 +41,7 @@ src/
   hooks/        # 커스텀 훅
   utils/        # 유틸 함수 (날짜 계산 등)
   types/        # 타입 정의
-\`\`\`
+```
 
 ## 🌿 브랜치 전략
 
@@ -58,12 +58,12 @@ src/
 1. **issue 생성** (이슈 템플릿 사용) → **브랜치 생성** → 작업
 2. 브랜치 네이밍: `type/#issueNumber-description`
 
-\`\`\`
+```
 feat/#12-login-api
 fix/#31-assets-chart
 refactor/#44-home-layout
 docs/#55-api-spec
-\`\`\`
+```
 
 ### 브랜치 / 커밋 타입
 
@@ -85,7 +85,7 @@ docs/#55-api-spec
 - 커밋 내용은 **한국어**, 이슈 번호는 `(#Number)` 형식으로 footer에 작성
 - `.gitmessage` 템플릿 사용 (설정법은 하단 참고)
 
-\`\`\`
+```
 type(scope): subject
 
 # 본문 (선택) - 무엇을 왜 변경했는지, 한 줄 72자 이내 권장
@@ -95,7 +95,7 @@ type(scope): subject
 # Footer (선택) - 관련 이슈
 Closes #이슈번호
 Related to #이슈번호
-\`\`\`
+```
 
 **작성 규칙**
 - 제목은 50자 이내
@@ -105,19 +105,19 @@ Related to #이슈번호
 
 ### .gitmessage 템플릿 설정
 
-\`\`\`bash
+```bash
 git config commit.template .gitmessage
-\`\`\`
+```
 
 ## 🔀 PR 규칙
 
 - 작업 완료 후 PR 생성, PR 템플릿 사용
 - PR 제목 형식: `[type] 작업 내용`
 
-\`\`\`
+```
 [feat] 로그인 API 연동
 [chore] 프로젝트 초기 설정
-\`\`\`
+```
 
 ## ✅ Merge 규칙
 
