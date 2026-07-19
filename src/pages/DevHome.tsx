@@ -6,7 +6,7 @@ interface DevRoute {
 }
 
 const routes: DevRoute[] = [
-  { label: '홈페이지', path: '/' },
+  { label: '홈페이지', path: '/home' },
   { label: '로그인', path: '/login' },
   { label: '일정 만들기', path: '/plan/create' },
   { label: '마이페이지', path: '/my' },
@@ -15,11 +15,20 @@ const routes: DevRoute[] = [
   { label: '디자인 시스템', path: '/design-system' },
 ];
 
+
 export default function DevHome() {
   return (
     <div style={{ padding: 40 }}>
-      <h1>🛠 개발용 네비게이션</h1>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 240 }}>
+      <h1 style={{ textAlign: 'left', margin: '0 0 40px 0' }}>👾Dev Navigation</h1>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          gap: 12,
+          maxWidth: 240,
+        }}
+      >
         {routes.map((r) => (
           <Link
             key={r.path}
@@ -29,8 +38,9 @@ export default function DevHome() {
               border: '1px solid #ccc',
               borderRadius: 8,
               textDecoration: 'none',
-              textAlign: 'center',
+              textAlign: 'left',
               color: '#111',
+              width: '100%',
             }}
           >
             {r.label}
