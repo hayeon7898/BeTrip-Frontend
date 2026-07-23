@@ -6,7 +6,8 @@ interface DevRoute {
 }
 
 const routes: DevRoute[] = [
-  { label: '홈페이지', path: '/home' },
+  { label: '홈페이지 (로그인 전)', path: '/home' },
+  { label: '홈페이지 (로그인 후)', path: '/home?loggedIn=true' },
   { label: '로그인', path: '/login' },
   { label: '일정 만들기', path: '/plan/create' },
   { label: '마이페이지', path: '/my' },
