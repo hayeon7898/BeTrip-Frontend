@@ -252,9 +252,6 @@ export default function DesignSystemPage() {
         title="모달"
         usage='확인이 필요한 동작에는 ConfirmModal을 사용하세요: <ConfirmModal isOpen={open} title="..." onConfirm={...} onCancel={...} />'
       >
-        <Typography variant="body" color="secondary" className={styles.sectionTitle}>
-          삭제 등 확인이 필요한 동작에 사용하는 공통 확인 모달
-        </Typography>
         <Button variant="primary" size="md" onClick={() => setConfirmOpen(true)}>
           모달 미리보기
         </Button>
