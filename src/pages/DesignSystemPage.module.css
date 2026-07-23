@@ -1,0 +1,185 @@
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 48px 48px 100px;
+  text-align: left;
+}
+
+.pageTitle {
+  margin-bottom: 4px;
+}
+
+.pageSubtitle {
+  margin-bottom: 48px;
+}
+
+.section {
+  margin-bottom: 48px;
+}
+
+.sectionTitle {
+  margin-bottom: 16px;
+}
+
+.usage {
+  margin: 0 0 12px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  overflow-x: auto;
+}
+
+.usage code {
+  font-family: var(--mono, ui-monospace, Consolas, monospace);
+}
+
+.optionList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 0 16px;
+}
+
+.optionLine {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.optionLabel {
+  display: inline-block;
+  width: 64px;
+  color: var(--color-text-tertiary);
+  font-weight: 700;
+}
+
+/* 색상 */
+.colorGroups {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.colorGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.colorSwatch {
+  height: 72px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-light);
+}
+
+.colorName {
+  margin-top: 8px;
+}
+
+.colorHex {
+  margin-top: 2px;
+}
+
+/* 타이포그래피 */
+.typeList {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.typeRow {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.typeLabel {
+  width: 130px;
+  flex-shrink: 0;
+}
+
+/* 버튼 */
+.buttonRows {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.buttonRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.buttonRowLabel {
+  width: 90px;
+  flex-shrink: 0;
+  text-transform: capitalize;
+}
+
+/* 배지 */
+.badgeRow {
+  display: flex;
+  gap: 20px;
+}
+
+.badgeItem {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+/* 폼 */
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 420px;
+}
+
+/* 선택 버튼 (Chip) */
+.chipDemoGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.chipDemoGroup:last-child {
+  margin-bottom: 0;
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* 카드 */
+.cardDemo {
+  max-width: 420px;
+}
+
+/* 알림 */
+.alertList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 480px;
+}
+
+.alertRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.alertLabel {
+  width: 64px;
+  flex-shrink: 0;
+}
+
+.alertBox {
+  flex: 1;
+}
