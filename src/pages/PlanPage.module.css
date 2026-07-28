@@ -1,0 +1,233 @@
+.page {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 0 48px 16px;
+}
+
+.main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 6fr 4fr;
+  gap: 24px;
+  padding: 0 48px 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  min-height: 0;
+}
+
+/* 지도 패널 (placeholder) */
+
+.mapPanel {
+  position: relative;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl, 20px);
+  overflow: hidden;
+  min-height: 600px;
+}
+
+.mapArea {
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--color-sub-50),
+    var(--color-sub-50) 10px,
+    #fff 10px,
+    #fff 20px
+  );
+}
+
+.mapPlaceholderLabel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  padding: 6px 14px;
+  border-radius: var(--radius-lg, 12px);
+  white-space: nowrap;
+}
+
+.pin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-main-500);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(27, 28, 43, 0.2);
+}
+
+/* 지도 위 검색 오버레이 */
+
+.mapSearchOverlay {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.searchToggleButton {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: #fff;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(27, 28, 43, 0.15);
+  cursor: pointer;
+}
+
+.searchToggleButton:hover {
+  color: var(--color-main-500);
+}
+
+.mapSearchBar {
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(27, 28, 43, 0.1);
+}
+
+.searchCloseButton {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  color: var(--color-text-tertiary);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.searchCloseButton:hover {
+  color: var(--color-text-secondary);
+}
+
+.mapResultsPanel {
+  width: 100%;
+  background: #fff;
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: 0 4px 12px rgba(27, 28, 43, 0.1);
+  padding: 12px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.pendingHint {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.mapResultsList {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.draggableCard {
+  cursor: grab;
+}
+
+.draggableCard:active {
+  cursor: grabbing;
+}
+
+/* 우측 일정 패널 */
+
+.schedulePanel {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl, 20px);
+  padding: 20px 24px;
+  overflow-y: auto;
+  min-height: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.slotSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.slotTitle {
+  margin: 0;
+}
+
+.slotDropZone {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-radius: var(--radius-lg, 12px);
+  padding: 4px;
+  transition: background 0.15s ease;
+}
+
+.slotDropZoneActive {
+  background: var(--color-sub-50);
+  outline: 2px dashed var(--color-main-500);
+  outline-offset: 2px;
+}
+
+.travelDivider {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--color-text-tertiary);
+}
+
+.addSlotButton {
+  border: 1px dashed var(--color-border);
+  background: none;
+  border-radius: var(--radius-lg, 12px);
+  padding: 12px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.addSlotButton:hover {
+  background: var(--color-sub-50);
+  border-color: var(--color-main-500);
+  color: var(--color-main-500);
+}
+
+@media (max-width: 960px) {
+  .main {
+    grid-template-columns: 1fr;
+  }
+
+  .mapPanel {
+    min-height: 360px;
+  }
+}
