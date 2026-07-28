@@ -10,11 +10,15 @@ import Card from '../components/Card/Card';
 import Alert from '../components/Alert/Alert';
 import Chip from '../components/Chip/Chip';
 import ConfirmModal from '../components/Modal/ConfirmModal';
+import SearchBar from '../components/SearchBar/SearchBar';
+import PlaceCard from '../components/PlaceCard/PlaceCard';
+import PlaceListItem from '../components/PlaceListItem/PlaceListItem';
 import { useToast } from '../components/Toast/useToast';
 import type { ButtonSize, ButtonVariant } from '../components/Button/Button';
 import type { BadgeTone } from '../components/Badge/Badge';
 import type { AlertVariant } from '../components/Alert/Alert';
 import type { TypographyVariant } from '../components/Typography/Typography';
+import type { Place } from '../types/place';
 
 type ColorToken = { name: string; hex: string; varName: string };
 
@@ -64,6 +68,34 @@ const alertSamples: { variant: AlertVariant; message: string }[] = [
   { variant: 'error', message: '요청 처리 중 오류가 발생했습니다' },
 ];
 
+// PlaceCard / PlaceListItem 미리보기 전용 더미 데이터입니다.
+// PlacePage의 실제 mock 데이터(placeMockData.ts)와는 분리해서, 이 페이지가
+// 특정 페이지 데이터에 의존하지 않고 항상 단독으로 렌더링되도록 했어요.
+const placeDemoData: Place[] = [
+  {
+    id: 'demo-restaurant',
+    name: '한강뷰 와인바',
+    category: 'restaurant',
+    rating: 4.8,
+    tags: ['조용함', '한강뷰'],
+    priceLabel: '4만원대',
+    menuSummary: [],
+    reviewSummary: '',
+    photos: [],
+  },
+  {
+    id: 'demo-cafe',
+    name: '성수동 로스터리',
+    category: 'cafe',
+    rating: 4.5,
+    tags: ['조용함', '원두 직접 로스팅'],
+    priceLabel: '1만원 이하',
+    menuSummary: [],
+    reviewSummary: '',
+    photos: [],
+  },
+];
+
 function Section({
   title,
   usage,
@@ -106,6 +138,9 @@ export default function DesignSystemPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [singleChip, setSingleChip] = useState<string | null>(chipDemoOptions[0]);
   const [multiChips, setMultiChips] = useState<string[]>([chipDemoOptions[0]]);
+  const [searchDemoValue, setSearchDemoValue] = useState('');
+  const [addedDemoIds, setAddedDemoIds] = useState<string[]>([]);
+  const [listDemoItems, setListDemoItems] = useState<Place[]>(placeDemoData);
   const { showToast } = useToast();
 
   return (
@@ -217,6 +252,18 @@ export default function DesignSystemPage() {
       </Section>
 
       <Section
+        title="검색바"
+        usage='키워드 검색에는 SearchBar 컴포넌트를 사용하세요: <SearchBar value={value} onChange={setValue} onSubmit={handleSearch} placeholder="검색어를 입력하세요" />'
+      >
+        <SearchBar
+          value={searchDemoValue}
+          onChange={setSearchDemoValue}
+          onSubmit={(query) => showToast({ variant: 'info', message: `'${query}' 검색 (예시)` })}
+          placeholder="장소, 맛집, 카페 검색해서 바로 추가해보세요"
+        />
+      </Section>
+
+      <Section
         title="카드"
         usage='일정/장소 카드에는 Card 컴포넌트를 사용하세요: <Card title="제주도 힐링 여행" subtitle="제주도 · 2026.08.10 - 08.13" />'
       >
@@ -225,6 +272,46 @@ export default function DesignSystemPage() {
           title="제주도 힐링 여행"
           subtitle="제주도 · 2026.08.10 - 08.13"
         />
+      </Section>
+
+      <Section
+        title="장소 카드 (PlaceCard)"
+        usage='AI 추천/검색 결과처럼 담기 액션이 필요한 카드에는 PlaceCard를 사용하세요: <PlaceCard place={place} added={added} onAdd={handleAdd} onClick={handleOpenDetail} />'
+      >
+        <div className={styles.chipRow}>
+          {placeDemoData.map((place) => (
+            <PlaceCard
+              key={place.id}
+              place={place}
+              added={addedDemoIds.includes(place.id)}
+              onAdd={(p) =>
+                setAddedDemoIds((prev) => (prev.includes(p.id) ? prev : [...prev, p.id]))
+              }
+              onClick={(p) => showToast({ variant: 'info', message: `${p.name} 상세보기 (예시)` })}
+            />
+          ))}
+        </div>
+      </Section>
+
+      <Section
+        title="장소 리스트 아이템 (PlaceListItem)"
+        usage='담은 장소를 목록으로 보여줄 때는 PlaceListItem을 사용하세요: <PlaceListItem place={place} onClick={handleOpenDetail} onRemove={handleRemove} />'
+      >
+        <div className={styles.typeList}>
+          {listDemoItems.map((place) => (
+            <PlaceListItem
+              key={place.id}
+              place={place}
+              onClick={(p) => showToast({ variant: 'info', message: `${p.name} 상세보기 (예시)` })}
+              onRemove={(p) => setListDemoItems((prev) => prev.filter((item) => item.id !== p.id))}
+            />
+          ))}
+          {listDemoItems.length === 0 && (
+            <Typography variant="caption" color="tertiary">
+              모두 삭제됨 — 새로고침하면 다시 보여요
+            </Typography>
+          )}
+        </div>
       </Section>
 
       <Section
@@ -292,7 +379,17 @@ export default function DesignSystemPage() {
           >
             토스트 미리보기
           </Button>
+          <Button
+            variant="outline"
+            size="md"
+            onClick={() => showToast({ variant: 'brand', message: '담았어요!' })}
+          >
+            브랜드 토스트 미리보기
+          </Button>
         </div>
+        <Typography variant="caption" color="tertiary" className={styles.usage}>
+          brand 톤은 success(상태 성공)와 별개로, "장소를 담았어요" 같은 브랜드 액션 피드백 전용입니다.
+        </Typography>
       </Section>
 
       <Section
