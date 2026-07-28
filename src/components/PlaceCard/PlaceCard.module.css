@@ -1,0 +1,71 @@
+.card {
+  width: 220px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg, 12px);
+  background: #fff;
+}
+
+.thumbnailButton {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  overflow: hidden;
+  border-radius: var(--radius-lg, 12px) var(--radius-lg, 12px) 0 0;
+}
+
+.thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbnailPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-sub-50);
+}
+
+.info {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px 4px;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.name {
+  margin: 0 0 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  /* 태그가 1줄이든 2줄이든 이 영역 높이를 항상 2줄만큼 확보해서
+     카드 높이가 카드마다 들쭉날쭉해지지 않게 합니다. */
+  min-height: calc(1.4em * 2);
+  line-height: 1.4;
+}
+
+.addButton {
+  margin: 12px 14px 14px;
+  width: calc(100% - 28px);
+  /* 위 콘텐츠 길이와 상관없이 버튼을 항상 카드 맨 아래에 고정 */
+  margin-top: auto;
+}

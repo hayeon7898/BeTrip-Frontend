@@ -42,6 +42,10 @@
   background: var(--color-error);
   color: var(--color-white);
 }
+.brand {
+  background: var(--color-main-500);
+  color: #fff;
+}
 
 .close {
   margin-left: auto;
