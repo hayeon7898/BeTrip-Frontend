@@ -10,7 +10,7 @@ import PlaceCard from '../components/PlaceCard/PlaceCard';
 import PlaceListItem from '../components/PlaceListItem/PlaceListItem';
 import PlaceDetailModal from '../components/Modal/PlaceDetailModal';
 import { useToast } from '../components/Toast/useToast';
-import { MOCK_PLACES } from '../mocks/PlaceMockData';
+import { MOCK_PLACES } from '../mocks/PlanMockData';
 import { CATEGORY_LABEL, CATEGORY_ORDER } from '../types/place';
 import type { Place, PlaceCategory } from '../types/place';
 import styles from './PlacePage.module.css';
