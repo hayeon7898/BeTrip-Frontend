@@ -1,0 +1,60 @@
+.viewport {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 300;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 240px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 10px 24px rgba(27, 28, 43, 0.15);
+}
+
+.info {
+  background: var(--color-main-500);
+  color: var(--color-white);
+}
+
+.success {
+  background: var(--color-success);
+  color: var(--color-white);
+}
+
+.warning {
+  background: var(--color-warning);
+  color: var(--color-white);
+}
+
+.error {
+  background: var(--color-error);
+  color: var(--color-white);
+}
+
+.close {
+  margin-left: auto;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font-size: 16px;
+  line-height: 1;
+  opacity: 0.8;
+  cursor: pointer;
+}
+
+.close:hover {
+  opacity: 1;
+}
