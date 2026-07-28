@@ -8,6 +8,12 @@
   background: #fff;
 }
 
+.time {
+  flex-shrink: 0;
+  width: 44px;
+  font-weight: 700;
+}
+
 .main {
   flex: 1;
   min-width: 0;
