@@ -8,6 +8,7 @@ import Input from '../components/Input/Input';
 import Select from '../components/Select/Select';
 import Card from '../components/Card/Card';
 import Alert from '../components/Alert/Alert';
+import Chip from '../components/Chip/Chip';
 import ConfirmModal from '../components/Modal/ConfirmModal';
 import { useToast } from '../components/Toast/useToast';
 import type { ButtonSize, ButtonVariant } from '../components/Button/Button';
@@ -99,8 +100,12 @@ function Section({
   );
 }
 
+const chipDemoOptions = ['힐링', '맛집', '관광'];
+
 export default function DesignSystemPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [singleChip, setSingleChip] = useState<string | null>(chipDemoOptions[0]);
+  const [multiChips, setMultiChips] = useState<string[]>([chipDemoOptions[0]]);
   const { showToast } = useToast();
 
   return (
@@ -220,6 +225,48 @@ export default function DesignSystemPage() {
           title="제주도 힐링 여행"
           subtitle="제주도 · 2026.08.10 - 08.13"
         />
+      </Section>
+
+      <Section
+        title="선택 버튼 (Chip)"
+        usage='단일/복수 선택 토글에는 Chip 컴포넌트를 사용하세요. 선택 로직(단일/복수)은 상위 컴포넌트에서 상태로 관리: <Chip selected={value === option} onClick={...}>{option}</Chip>'
+      >
+        <div className={styles.chipDemoGroup}>
+          <Typography variant="caption" color="tertiary">
+            단일 선택 (이동수단 등)
+          </Typography>
+          <div className={styles.chipRow}>
+            {chipDemoOptions.map((option) => (
+              <Chip
+                key={option}
+                selected={singleChip === option}
+                onClick={() => setSingleChip(option)}
+              >
+                {option}
+              </Chip>
+            ))}
+          </div>
+        </div>
+        <div className={styles.chipDemoGroup}>
+          <Typography variant="caption" color="tertiary">
+            복수 선택 (여행 목적/스타일 등)
+          </Typography>
+          <div className={styles.chipRow}>
+            {chipDemoOptions.map((option) => (
+              <Chip
+                key={option}
+                selected={multiChips.includes(option)}
+                onClick={() =>
+                  setMultiChips((prev) =>
+                    prev.includes(option) ? prev.filter((o) => o !== option) : [...prev, option],
+                  )
+                }
+              >
+                {option}
+              </Chip>
+            ))}
+          </div>
+        </div>
       </Section>
 
       <Section
