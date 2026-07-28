@@ -1,0 +1,75 @@
+.page {
+  min-height: calc(100vh - 44px);
+  padding: 40px 20px 80px;
+}
+
+.container {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.pageHeader {
+  margin-bottom: 32px;
+}
+
+.subtitle {
+  margin-top: 8px;
+}
+
+.section {
+  margin-bottom: 28px;
+}
+
+.lastSection {
+  margin-bottom: 36px;
+}
+
+.sectionLabel {
+  margin-bottom: 10px;
+}
+
+.dateRow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.dateInput {
+  flex: 1;
+}
+
+.dateSeparator {
+  flex-shrink: 0;
+}
+
+.dateError {
+  margin-top: 10px;
+}
+
+.stayLabel {
+  margin-top: 10px;
+  color: var(--color-main-500);
+  font-weight: 700;
+}
+
+.required {
+  color: var(--color-main-500);
+  margin-left: 2px;
+}
+
+.hint {
+  color: var(--color-text-tertiary);
+  font-weight: 500;
+  font-size: 13px;
+  margin-left: 6px;
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.submitButton {
+  width: 100%;
+}

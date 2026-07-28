@@ -138,6 +138,24 @@
   max-width: 420px;
 }
 
+/* 선택 버튼 (Chip) */
+.chipDemoGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.chipDemoGroup:last-child {
+  margin-bottom: 0;
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 /* 카드 */
 .cardDemo {
   max-width: 420px;
