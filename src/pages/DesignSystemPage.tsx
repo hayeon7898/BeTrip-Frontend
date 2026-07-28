@@ -13,6 +13,7 @@ import ConfirmModal from '../components/Modal/ConfirmModal';
 import SearchBar from '../components/SearchBar/SearchBar';
 import PlaceCard from '../components/PlaceCard/PlaceCard';
 import PlaceListItem from '../components/PlaceListItem/PlaceListItem';
+import DayTabs from '../components/DayTabs/DayTabs';
 import { useToast } from '../components/Toast/useToast';
 import type { ButtonSize, ButtonVariant } from '../components/Button/Button';
 import type { BadgeTone } from '../components/Badge/Badge';
@@ -141,6 +142,7 @@ export default function DesignSystemPage() {
   const [searchDemoValue, setSearchDemoValue] = useState('');
   const [addedDemoIds, setAddedDemoIds] = useState<string[]>([]);
   const [listDemoItems, setListDemoItems] = useState<Place[]>(placeDemoData);
+  const [dayTabsDemo, setDayTabsDemo] = useState(1);
   const { showToast } = useToast();
 
   return (
@@ -253,7 +255,7 @@ export default function DesignSystemPage() {
 
       <Section
         title="검색바"
-        usage='키워드 검색에는 SearchBar 컴포넌트를 사용하세요: <SearchBar value={value} onChange={setValue} onSubmit={handleSearch} placeholder="검색어를 입력하세요" />'
+        usage='키워드 검색에는 SearchBar 컴포넌트를 사용하세요: <SearchBar value={value} onChange={setValue} onSubmit={handleSearch} placeholder="검색어를 입력하세요" /> · 오른쪽에 버튼 등을 같은 배경 안에 넣으려면 rightSlot prop 사용'
       >
         <SearchBar
           value={searchDemoValue}
@@ -261,6 +263,26 @@ export default function DesignSystemPage() {
           onSubmit={(query) => showToast({ variant: 'info', message: `'${query}' 검색 (예시)` })}
           placeholder="장소, 맛집, 카페 검색해서 바로 추가해보세요"
         />
+        <Typography variant="caption" color="tertiary" className={styles.usage}>
+          rightSlot 예시 (지도 위 검색바처럼 닫기 버튼이 필요할 때)
+        </Typography>
+        <SearchBar
+          value=""
+          onChange={() => undefined}
+          placeholder="닫기 버튼이 있는 검색바"
+          rightSlot={
+            <button type="button" aria-label="닫기" onClick={() => showToast({ variant: 'info', message: '닫기 (예시)' })}>
+              ×
+            </button>
+          }
+        />
+      </Section>
+
+      <Section
+        title="일차 탭 (DayTabs)"
+        usage='PlanPage처럼 Day 1~N을 넘나드는 화면에는 DayTabs를 사용하세요: <DayTabs totalDays={4} activeDay={activeDay} onSelect={setActiveDay} />'
+      >
+        <DayTabs totalDays={4} activeDay={dayTabsDemo} onSelect={setDayTabsDemo} />
       </Section>
 
       <Section
@@ -295,13 +317,14 @@ export default function DesignSystemPage() {
 
       <Section
         title="장소 리스트 아이템 (PlaceListItem)"
-        usage='담은 장소를 목록으로 보여줄 때는 PlaceListItem을 사용하세요: <PlaceListItem place={place} onClick={handleOpenDetail} onRemove={handleRemove} />'
+        usage='담은 장소를 목록으로 보여줄 때는 PlaceListItem을 사용하세요: <PlaceListItem place={place} onClick={handleOpenDetail} onRemove={handleRemove} /> · 일정처럼 시간이 있으면 time prop 추가: <PlaceListItem place={place} time="08:30" ... />'
       >
         <div className={styles.typeList}>
-          {listDemoItems.map((place) => (
+          {listDemoItems.map((place, index) => (
             <PlaceListItem
               key={place.id}
               place={place}
+              time={index === 0 ? '08:30' : undefined}
               onClick={(p) => showToast({ variant: 'info', message: `${p.name} 상세보기 (예시)` })}
               onRemove={(p) => setListDemoItems((prev) => prev.filter((item) => item.id !== p.id))}
             />
