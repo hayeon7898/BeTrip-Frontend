@@ -83,6 +83,8 @@ const placeDemoData: Place[] = [
     menuSummary: [],
     reviewSummary: '',
     photos: [],
+    latitude: 37.5219,
+    longitude: 126.9895,
   },
   {
     id: 'demo-cafe',
@@ -94,6 +96,8 @@ const placeDemoData: Place[] = [
     menuSummary: [],
     reviewSummary: '',
     photos: [],
+    latitude: 37.5445,
+    longitude: 127.0557,
   },
 ];
 
