@@ -2,6 +2,7 @@ import type { Place } from '../types/place';
 
 // 실제 서비스에서는 검색/추천 API 응답으로 대체됩니다.
 // PlacePage, PlanPage 등 2곳 이상에서 쓰이기 시작해서 mocks/로 옮겼어요.
+// latitude/longitude는 지도 데모용 근사 좌표입니다.
 export const MOCK_PLACES: Place[] = [
   {
     id: 'p1',
@@ -13,6 +14,8 @@ export const MOCK_PLACES: Place[] = [
     menuSummary: ['시그니처 스틸컷 스테이크', '내추럴 와인 12종', '치즈 플래터'],
     reviewSummary: '한강이 보이는 자리와 조용한 분위기 덕분에 둘이 대화하기 좋다는 평이 많아요. 와인 페어링 추천도 인기예요.',
     photos: [],
+    latitude: 37.5219,
+    longitude: 126.9895,
   },
   {
     id: 'p2',
@@ -24,6 +27,8 @@ export const MOCK_PLACES: Place[] = [
     menuSummary: ['트러플 크림 파스타', '화덕 마르게리타', '티라미수'],
     reviewSummary: '파스타 면 삶는 정도가 좋고 서비스가 친절하다는 리뷰가 많아요. 예약은 필수예요.',
     photos: [],
+    latitude: 37.5400,
+    longitude: 127.0040,
   },
   {
     id: 'p3',
@@ -35,6 +40,8 @@ export const MOCK_PLACES: Place[] = [
     menuSummary: ['제철 오마카세 코스 16피스', '미소국', '디저트'],
     reviewSummary: '재료 신선도와 셰프의 설명이 좋다는 평이 압도적이에요. 특별한 날 방문하기 좋아요.',
     photos: [],
+    latitude: 37.5172,
+    longitude: 127.0473,
   },
   {
     id: 'p4',
@@ -46,6 +53,8 @@ export const MOCK_PLACES: Place[] = [
     menuSummary: ['핸드드립 싱글오리진', '더티 크림라떼', '수제 스콘'],
     reviewSummary: '원두 향이 좋고 좌석 간격이 넓어 편하게 쉬기 좋다는 평이 많아요.',
     photos: [],
+    latitude: 37.5445,
+    longitude: 127.0557,
   },
   {
     id: 'p5',
@@ -57,6 +66,8 @@ export const MOCK_PLACES: Place[] = [
     menuSummary: ['에그 베네딕트', '아보카도 토스트', '플랫화이트'],
     reviewSummary: '루프탑 자리에서 보는 전망이 좋아 사진 찍기 좋다는 리뷰가 많아요. 웨이팅이 있을 수 있어요.',
     photos: [],
+    latitude: 37.5384,
+    longitude: 126.9834,
   },
   {
     id: 'p6',
@@ -68,6 +79,8 @@ export const MOCK_PLACES: Place[] = [
     menuSummary: ['메인 산책로 1바퀴 약 40분', '사슴 방사장 관람', '피크닉 잔디밭'],
     reviewSummary: '평일 오전에는 한적하고 산책하기 좋다는 평이 많아요. 자전거 대여도 가능해요.',
     photos: [],
+    latitude: 37.5443,
+    longitude: 127.0374,
   },
   {
     id: 'p7',
@@ -79,6 +92,8 @@ export const MOCK_PLACES: Place[] = [
     menuSummary: ['따릉이 대여소 이용', '뚝섬~잠실 코스 약 1시간', '야경 포인트'],
     reviewSummary: '해질 무렵 라이딩 추천이 많고, 초보자도 어렵지 않다는 리뷰가 많아요.',
     photos: [],
+    latitude: 37.5297,
+    longitude: 127.0139,
   },
   {
     id: 'p8',
@@ -90,6 +105,8 @@ export const MOCK_PLACES: Place[] = [
     menuSummary: ['물레 성형 체험 90분', '완성작 택배 발송', '앞치마 대여 포함'],
     reviewSummary: '선생님이 1:1로 꼼꼼히 알려주셔서 초보자도 만족스러운 결과물을 만들 수 있다는 평이 많아요.',
     photos: [],
+    latitude: 37.5633,
+    longitude: 126.9975,
   },
   {
     id: 'p9',
@@ -101,5 +118,7 @@ export const MOCK_PLACES: Place[] = [
     menuSummary: ['제육볶음 정식', '된장찌개', '계란찜'],
     reviewSummary: '반찬이 자주 바뀌고 웨이팅이 있어도 회전이 빠르다는 평이 많아요.',
     photos: [],
+    latitude: 37.5509,
+    longitude: 127.0027,
   },
 ];

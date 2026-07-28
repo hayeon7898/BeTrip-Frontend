@@ -9,6 +9,8 @@ import Button from '../components/Button/Button';
 import PlaceCard from '../components/PlaceCard/PlaceCard';
 import PlaceListItem from '../components/PlaceListItem/PlaceListItem';
 import PlaceDetailModal from '../components/Modal/PlaceDetailModal';
+import KakaoMap from '../components/Map/KakaoMap';
+import type { MapMarker } from '../components/Map/KakaoMap';
 import { useToast } from '../components/Toast/useToast';
 import { MOCK_PLACES } from '../mocks/PlanMockData';
 import type { Place } from '../types/place';
@@ -48,15 +50,6 @@ function dummyTravelMinutes(fromId: string, toId: string) {
   return 8 + (seed % 20);
 }
 
-// 지도 SDK 연동 전까지 쓰는 더미 핀 좌표(문자열 시드 기반).
-function pinPosition(id: string) {
-  const seed = id.split('').reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
-  return {
-    left: `${12 + ((seed * 37) % 72)}%`,
-    top: `${15 + ((seed * 53) % 65)}%`,
-  };
-}
-
 let scheduleItemId = 0;
 const nextScheduleItemId = () => `sch-${++scheduleItemId}`;
 
@@ -89,6 +82,24 @@ export default function PlanPage() {
     MEAL_SLOT_ORDER.forEach((slot) => list.push(...daySchedule[slot]));
     return list;
   }, [daySchedule]);
+
+  // 담긴 순서(index)를 지도 핀 번호로, 실제 좌표를 마커 위치로 사용합니다.
+  const mapMarkers: MapMarker[] = useMemo(
+    () =>
+      flatItems.map((item, index) => ({
+        id: item.id,
+        title: item.place.name,
+        latitude: item.place.latitude,
+        longitude: item.place.longitude,
+        label: index + 1,
+      })),
+    [flatItems],
+  );
+
+  const handleMarkerClick = (scheduleItemIdClicked: string) => {
+    const item = flatItems.find((i) => i.id === scheduleItemIdClicked);
+    if (item) setSelectedPlace(item.place);
+  };
 
   const handleMapSearchSubmit = (query: string) => {
     const results = MOCK_PLACES.filter(
@@ -175,17 +186,7 @@ export default function PlanPage() {
 
       <div className={styles.main}>
         <div className={styles.mapPanel}>
-          <div className={styles.mapArea}>
-            <Typography variant="caption" color="tertiary" className={styles.mapPlaceholderLabel}>
-              지도 영역 (지도 SDK 연동 예정)
-            </Typography>
-
-            {flatItems.map((item, index) => (
-              <div key={item.id} className={styles.pin} style={pinPosition(item.id)} title={item.place.name}>
-                {index + 1}
-              </div>
-            ))}
-          </div>
+          <KakaoMap markers={mapMarkers} onMarkerClick={handleMarkerClick} className={styles.mapArea} />
 
           <div className={styles.mapSearchOverlay}>
             {isSearchOpen ? (

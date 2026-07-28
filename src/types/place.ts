@@ -11,6 +11,8 @@ export interface Place {
   menuSummary: string[];
   reviewSummary: string;
   photos: string[];
+  latitude: number;
+  longitude: number;
 }
 
 export const CATEGORY_LABEL: Record<PlaceCategory, string> = {
