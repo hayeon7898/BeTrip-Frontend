@@ -1,4 +1,5 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import Header from '../components/Header/Header';
 import Typography from '../components/Typography/Typography';
 import Button from '../components/Button/Button';
 import heroImage from '../assets/hero.png';
@@ -11,19 +12,7 @@ export default function HomePage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.header}>
-        <div className={styles.logo}>BeTrip</div>
-
-        {loggedIn ? (
-          <Button variant="ghost" size="sm" onClick={() => navigate('/home')}>
-            로그아웃
-          </Button>
-        ) : (
-          <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
-            로그인
-          </Button>
-        )}
-      </div>
+      <Header loggedIn={loggedIn} />
 
       <div className={styles.main}>
         <div className={styles.intro}>
