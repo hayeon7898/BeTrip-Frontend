@@ -1,6 +1,6 @@
 import { createContext } from 'react';
 
-export type ToastVariant = 'info' | 'success' | 'warning' | 'error' | 'brand';
+export type ToastVariant = 'info' | 'success' | 'warning' | 'error';
 
 export interface ToastItem {
   id: number;

@@ -406,17 +406,7 @@ export default function DesignSystemPage() {
           >
             토스트 미리보기
           </Button>
-          <Button
-            variant="outline"
-            size="md"
-            onClick={() => showToast({ variant: 'brand', message: '담았어요!' })}
-          >
-            브랜드 토스트 미리보기
-          </Button>
         </div>
-        <Typography variant="caption" color="tertiary" className={styles.usage}>
-          brand 톤은 success(상태 성공)와 별개로, "장소를 담았어요" 같은 브랜드 액션 피드백 전용입니다.
-        </Typography>
       </Section>
 
       <Section

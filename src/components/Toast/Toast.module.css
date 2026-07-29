@@ -24,29 +24,24 @@
 }
 
 .info {
-  background: var(--color-main-500);
-  color: var(--color-white);
+  background: var(--color-info-bg);
+  color: var(--color-main-500);
 }
 
 .success {
-  background: var(--color-success);
-  color: var(--color-white);
+  background: var(--color-success-bg);
+  color: var(--color-success);
 }
 
 .warning {
-  background: var(--color-warning);
-  color: var(--color-white);
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
 }
 
 .error {
-  background: var(--color-error);
-  color: var(--color-white);
+  background: var(--color-error-bg);
+  color: var(--color-error);
 }
-.brand {
-  background: var(--color-main-500);
-  color: #fff;
-}
-
 .close {
   margin-left: auto;
   padding: 0;
