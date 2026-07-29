@@ -42,8 +42,9 @@
   flex-shrink: 0;
 }
 
-.dateError {
+.dateErrorLabel {
   margin-top: 10px;
+  color: var(--color-error);
 }
 
 .stayLabel {
