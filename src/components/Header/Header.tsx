@@ -7,9 +7,11 @@ interface HeaderProps {
   loggedIn?: boolean;
   /** 로고 클릭 시 이동 경로 (기본값: '/') */
   logoTo?: string;
+  /** 로그인/로그아웃 버튼 표시 여부 (기본값: true). 로그인 페이지 등에서 숨길 때 사용 */
+  showAuthButton?: boolean;
 }
 
-export default function Header({ loggedIn = false, logoTo = '/' }: HeaderProps) {
+export default function Header({ loggedIn = false, logoTo = '/', showAuthButton = true }: HeaderProps) {
   const navigate = useNavigate();
 
   return (
@@ -23,15 +25,16 @@ export default function Header({ loggedIn = false, logoTo = '/' }: HeaderProps) 
         BeTrip
       </button>
 
-      {loggedIn ? (
-        <Button variant="ghost" size="sm" onClick={() => navigate('/home')}>
-          로그아웃
-        </Button>
-      ) : (
-        <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
-          로그인
-        </Button>
-      )}
+      {showAuthButton &&
+        (loggedIn ? (
+          <Button variant="ghost" size="sm" onClick={() => navigate('/home')}>
+            로그아웃
+          </Button>
+        ) : (
+          <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
+            로그인
+          </Button>
+        ))}
     </div>
   );
 }
