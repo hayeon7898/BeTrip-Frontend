@@ -193,7 +193,7 @@ export default function CreatePlanPage() {
 
         <div className={styles.section}>
           <RequiredLabel>여행 지역</RequiredLabel>
-          <div className={styles.chipRow}>
+          <div className={styles.chipRow} role="group" aria-label="여행 지역 선택">
             {regionOptions.map((option) => (
               <Chip
                 key={option.value}
@@ -208,7 +208,7 @@ export default function CreatePlanPage() {
 
         <div className={styles.section}>
           <RequiredLabel>도착 시간 (1일차)</RequiredLabel>
-          <div className={styles.chipRow}>
+          <div className={styles.chipRow} role="group" aria-label="도착 시간 선택 (1일차)">
             {timeOfDayOptions.map((option) => (
               <Chip
                 key={option.value}
@@ -223,7 +223,7 @@ export default function CreatePlanPage() {
 
         <div className={styles.section}>
           <RequiredLabel>출발 시간 (마지막날)</RequiredLabel>
-          <div className={styles.chipRow}>
+          <div className={styles.chipRow} role="group" aria-label="출발 시간 선택 (마지막날)">
             {timeOfDayOptions.map((option) => (
               <Chip
                 key={option.value}
@@ -240,7 +240,7 @@ export default function CreatePlanPage() {
           <Typography variant="h3" className={styles.sectionLabel}>
             이동수단
           </Typography>
-          <div className={styles.chipRow}>
+          <div className={styles.chipRow} role="group" aria-label="이동수단 선택">
             {transportOptions.map((option) => (
               <Chip
                 key={option.value}
@@ -259,7 +259,7 @@ export default function CreatePlanPage() {
           <Typography variant="h3" className={styles.sectionLabel}>
             여행 목적
           </Typography>
-          <div className={styles.chipRow}>
+          <div className={styles.chipRow} role="group" aria-label="여행 목적 선택">
             {purposeOptions.map((option) => (
               <Chip
                 key={option.value}
@@ -277,7 +277,7 @@ export default function CreatePlanPage() {
             여행 스타일
             <span className={styles.hint}>(복수 선택)</span>
           </Typography>
-          <div className={styles.chipRow}>
+          <div className={styles.chipRow} role="group" aria-label="여행 스타일 선택 (복수 선택)">
             {styleOptions.map((option) => (
               <Chip
                 key={option.value}
