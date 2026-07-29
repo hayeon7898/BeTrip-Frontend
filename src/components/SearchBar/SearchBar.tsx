@@ -1,4 +1,4 @@
-import type { FormEvent } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import styles from './SearchBar.module.css';
 
 interface SearchBarProps {
@@ -7,6 +7,8 @@ interface SearchBarProps {
   onChange: (value: string) => void;
   onSubmit?: (value: string) => void;
   className?: string;
+  /** 검색바와 같은 배경/알약 모양 안에 넣을 오른쪽 요소 (예: 닫기 버튼) */
+  rightSlot?: ReactNode;
 }
 
 export default function SearchBar({
@@ -15,6 +17,7 @@ export default function SearchBar({
   onChange,
   onSubmit,
   className,
+  rightSlot,
 }: SearchBarProps) {
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -43,6 +46,7 @@ export default function SearchBar({
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
       />
+      {rightSlot}
     </form>
   );
 }
