@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import Header from '../components/Header/Header';
 import Typography from '../components/Typography/Typography';
 import Input from '../components/Input/Input';
 import Button from '../components/Button/Button';
 import Chip from '../components/Chip/Chip';
 import { useToast } from '../components/Toast/useToast';
+import { getDayDiff, getTodayKST } from '../utils/date';
 import styles from './CreatePlanPage.module.css';
 
 const MAX_NIGHTS = 13;
@@ -51,15 +53,9 @@ const styleOptions: Option[] = [
   { label: '🍽️ 맛집', value: 'FOOD' },
 ];
 
-function getTodayKST() {
-  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
-}
-
 function getNights(startDate: string, endDate: string): number | null {
   if (!startDate || !endDate) return null;
-  return Math.round(
-    (new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24),
-  );
+  return getDayDiff(startDate, endDate);
 }
 
 function RequiredLabel({ children }: { children: string }) {
@@ -73,6 +69,8 @@ function RequiredLabel({ children }: { children: string }) {
 
 export default function CreatePlanPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const loggedIn = searchParams.get('loggedIn') === 'true';
   const { showToast } = useToast();
 
   const [startDate, setStartDate] = useState('');
@@ -146,6 +144,8 @@ export default function CreatePlanPage() {
 
   return (
     <div className={styles.page}>
+      <Header loggedIn={loggedIn} />
+
       <div className={styles.container}>
         <div className={styles.pageHeader}>
           <Typography variant="h1">여행 일정 만들기</Typography>

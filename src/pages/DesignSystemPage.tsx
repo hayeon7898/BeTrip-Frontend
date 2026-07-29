@@ -291,12 +291,14 @@ export default function DesignSystemPage() {
 
       <Section
         title="카드"
-        usage='일정/장소 카드에는 Card 컴포넌트를 사용하세요: <Card title="제주도 힐링 여행" subtitle="제주도 · 2026.08.10 - 08.13" />'
+        usage='일정/장소 카드에는 Card 컴포넌트를 사용하세요: <Card title="제주도 힐링 여행" subtitle="제주도 · 2026.08.10 - 08.13" badge="D-12" onDelete={handleDelete} />. badge는 D-day 등 우측 배지, onDelete를 전달하면 배지 옆에 삭제(×) 버튼이 표시되고 클릭이 카드의 onClick으로 전파되지 않습니다.'
       >
         <Card
           className={styles.cardDemo}
           title="제주도 힐링 여행"
           subtitle="제주도 · 2026.08.10 - 08.13"
+          badge="D-12"
+          onDelete={() => {}}
         />
       </Section>
 

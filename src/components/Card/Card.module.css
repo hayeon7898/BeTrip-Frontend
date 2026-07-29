@@ -42,3 +42,20 @@
   font-size: 13px;
   color: var(--color-text-secondary);
 }
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.deleteButton {
+  border: none;
+  background: none;
+  color: var(--color-text-tertiary);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+}
