@@ -1,15 +1,23 @@
 .page {
   min-height: calc(100vh - 44px);
-  padding: 40px 20px 80px;
 }
 
 .container {
   max-width: 640px;
   margin: 0 auto;
+  padding: 40px 20px 80px;
 }
 
 .title {
   margin-bottom: 24px;
+}
+
+.section {
+  margin-bottom: 28px;
+}
+
+.sectionTitle {
+  margin-bottom: 12px;
 }
 
 .list {
@@ -22,18 +30,8 @@
   cursor: pointer;
 }
 
-.deleteButton {
-  position: absolute;
-  top: 50%;
-  right: 12px;
-  transform: translateY(-50%);
-  border: none;
-  background: none;
-  color: var(--color-text-tertiary);
-  font-size: 20px;
-  cursor: pointer;
-  padding: 4px 8px;
-  line-height: 1;
+.pastCard {
+  opacity: 0.55;
 }
 
 .empty {
