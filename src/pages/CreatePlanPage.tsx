@@ -1,11 +1,15 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import Header from '../components/Header/Header';
 import Typography from '../components/Typography/Typography';
 import Input from '../components/Input/Input';
 import Button from '../components/Button/Button';
 import Chip from '../components/Chip/Chip';
-import Alert from '../components/Alert/Alert';
+import { useToast } from '../components/Toast/useToast';
+import { getDayDiff, getTodayKST } from '../utils/date';
 import styles from './CreatePlanPage.module.css';
+
+const MAX_NIGHTS = 13;
 
 interface Option {
   label: string;
@@ -49,13 +53,9 @@ const styleOptions: Option[] = [
   { label: '🍽️ 맛집', value: 'FOOD' },
 ];
 
-function getStayLabel(startDate: string, endDate: string) {
+function getNights(startDate: string, endDate: string): number | null {
   if (!startDate || !endDate) return null;
-  const nights = Math.round(
-    (new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24),
-  );
-  if (nights < 0) return null;
-  return `${nights}박 ${nights + 1}일`;
+  return getDayDiff(startDate, endDate);
 }
 
 function RequiredLabel({ children }: { children: string }) {
@@ -69,6 +69,9 @@ function RequiredLabel({ children }: { children: string }) {
 
 export default function CreatePlanPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const loggedIn = searchParams.get('loggedIn') === 'true';
+  const { showToast } = useToast();
 
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -79,23 +82,70 @@ export default function CreatePlanPage() {
   const [purpose, setPurpose] = useState<string | null>(null);
   const [travelStyles, setTravelStyles] = useState<string[]>([]);
 
-  const isDateRangeInvalid = Boolean(startDate && endDate && endDate < startDate);
+  const today = getTodayKST();
+  const nights = getNights(startDate, endDate);
+
+  const isStartInPast = Boolean(startDate && startDate < today);
+  const isDateRangeInvalid = nights !== null && nights < 0;
+  const isMaxDurationExceeded = nights !== null && nights > MAX_NIGHTS;
+
+  const dateErrorMessage = isStartInPast
+    ? '시작일은 오늘 이후 날짜로 선택해주세요'
+    : isDateRangeInvalid
+      ? '종료일은 시작일보다 빠를 수 없어요'
+      : isMaxDurationExceeded
+        ? `최대 ${MAX_NIGHTS}박 ${MAX_NIGHTS + 1}일까지 선택할 수 있어요`
+        : null;
+
+  const stayLabel = !dateErrorMessage && nights !== null ? `${nights}박 ${nights + 1}일` : null;
+
+  const arrivalIndex = arrivalTime ? timeOfDayOptions.findIndex((o) => o.value === arrivalTime) : -1;
+  const departureIndex = departureTime
+    ? timeOfDayOptions.findIndex((o) => o.value === departureTime)
+    : -1;
+  const isSameDayTimeInvalid =
+    nights === 0 && arrivalIndex !== -1 && departureIndex !== -1 && departureIndex <= arrivalIndex;
+
   const isRequiredMissing = !startDate || !endDate || !region || !arrivalTime || !departureTime;
-  const isSubmitDisabled = isRequiredMissing || isDateRangeInvalid;
-  const stayLabel = !isDateRangeInvalid ? getStayLabel(startDate, endDate) : null;
+  const isSubmitDisabled =
+    isRequiredMissing || isStartInPast || isDateRangeInvalid || isMaxDurationExceeded;
 
   const toggleStyle = (value: string) =>
     setTravelStyles((prev) =>
       prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value],
     );
 
+  const handleSelectArrivalTime = (value: string) => {
+    const index = timeOfDayOptions.findIndex((o) => o.value === value);
+    if (nights === 0 && departureIndex !== -1 && index >= departureIndex) {
+      showToast({ variant: 'error', message: '당일치기는 도착 시간이 출발 시간보다 빨라야 해요' });
+      return;
+    }
+    setArrivalTime(value);
+  };
+
+  const handleSelectDepartureTime = (value: string) => {
+    const index = timeOfDayOptions.findIndex((o) => o.value === value);
+    if (nights === 0 && arrivalIndex !== -1 && index <= arrivalIndex) {
+      showToast({ variant: 'error', message: '당일치기는 출발 시간이 도착 시간보다 늦어야 해요' });
+      return;
+    }
+    setDepartureTime(value);
+  };
+
   const handleCreatePlan = () => {
+    if (isSameDayTimeInvalid) {
+      showToast({ variant: 'error', message: '당일치기는 출발 시간이 도착 시간보다 늦어야 해요' });
+      return;
+    }
     const iId = `dev-${Date.now()}`;
     navigate(`/place?iId=${iId}`);
   };
 
   return (
     <div className={styles.page}>
+      <Header loggedIn={loggedIn} />
+
       <div className={styles.container}>
         <div className={styles.pageHeader}>
           <Typography variant="h1">여행 일정 만들기</Typography>
@@ -109,6 +159,7 @@ export default function CreatePlanPage() {
           <div className={styles.dateRow}>
             <Input
               type="date"
+              min={today}
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
               className={styles.dateInput}
@@ -118,28 +169,31 @@ export default function CreatePlanPage() {
             </Typography>
             <Input
               type="date"
+              min={startDate || today}
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
               className={styles.dateInput}
             />
           </div>
-          {isDateRangeInvalid && (
-            <Alert variant="error" className={styles.dateError}>
-              종료일은 시작일보다 빠를 수 없어요
-            </Alert>
+          {dateErrorMessage && (
+            <Typography variant="body" className={styles.dateErrorLabel}>
+              {dateErrorMessage}
+            </Typography>
           )}
-          <Typography
-            variant="body"
-            className={styles.stayLabel}
-            style={{ visibility: stayLabel ? 'visible' : 'hidden' }}
-          >
-            {stayLabel ?? ' '}
-          </Typography>
+          {!dateErrorMessage && (
+            <Typography
+              variant="body"
+              className={styles.stayLabel}
+              style={{ visibility: stayLabel ? 'visible' : 'hidden' }}
+            >
+              {stayLabel ?? ' '}
+            </Typography>
+          )}
         </div>
 
         <div className={styles.section}>
           <RequiredLabel>여행 지역</RequiredLabel>
-          <div className={styles.chipRow}>
+          <div className={styles.chipRow} role="group" aria-label="여행 지역 선택">
             {regionOptions.map((option) => (
               <Chip
                 key={option.value}
@@ -154,12 +208,12 @@ export default function CreatePlanPage() {
 
         <div className={styles.section}>
           <RequiredLabel>도착 시간 (1일차)</RequiredLabel>
-          <div className={styles.chipRow}>
+          <div className={styles.chipRow} role="group" aria-label="도착 시간 선택 (1일차)">
             {timeOfDayOptions.map((option) => (
               <Chip
                 key={option.value}
                 selected={arrivalTime === option.value}
-                onClick={() => setArrivalTime(option.value)}
+                onClick={() => handleSelectArrivalTime(option.value)}
               >
                 {option.label}
               </Chip>
@@ -169,12 +223,12 @@ export default function CreatePlanPage() {
 
         <div className={styles.section}>
           <RequiredLabel>출발 시간 (마지막날)</RequiredLabel>
-          <div className={styles.chipRow}>
+          <div className={styles.chipRow} role="group" aria-label="출발 시간 선택 (마지막날)">
             {timeOfDayOptions.map((option) => (
               <Chip
                 key={option.value}
                 selected={departureTime === option.value}
-                onClick={() => setDepartureTime(option.value)}
+                onClick={() => handleSelectDepartureTime(option.value)}
               >
                 {option.label}
               </Chip>
@@ -186,7 +240,7 @@ export default function CreatePlanPage() {
           <Typography variant="h3" className={styles.sectionLabel}>
             이동수단
           </Typography>
-          <div className={styles.chipRow}>
+          <div className={styles.chipRow} role="group" aria-label="이동수단 선택">
             {transportOptions.map((option) => (
               <Chip
                 key={option.value}
@@ -205,7 +259,7 @@ export default function CreatePlanPage() {
           <Typography variant="h3" className={styles.sectionLabel}>
             여행 목적
           </Typography>
-          <div className={styles.chipRow}>
+          <div className={styles.chipRow} role="group" aria-label="여행 목적 선택">
             {purposeOptions.map((option) => (
               <Chip
                 key={option.value}
@@ -223,7 +277,7 @@ export default function CreatePlanPage() {
             여행 스타일
             <span className={styles.hint}>(복수 선택)</span>
           </Typography>
-          <div className={styles.chipRow}>
+          <div className={styles.chipRow} role="group" aria-label="여행 스타일 선택 (복수 선택)">
             {styleOptions.map((option) => (
               <Chip
                 key={option.value}

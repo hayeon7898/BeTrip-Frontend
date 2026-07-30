@@ -118,7 +118,7 @@ export default function PlanPage() {
       };
       return { ...prev, [activeDay]: { ...day, [slot]: [...day[slot], item] } };
     });
-    showToast({ variant: 'brand', message: `${place.name}을(를) ${MEAL_SLOT_LABEL[slot]} 일정에 담았어요` });
+    showToast({ variant: 'info', message: `${place.name}을(를) ${MEAL_SLOT_LABEL[slot]} 일정에 담았어요` });
     setPendingAddSlot(null);
   };
 
@@ -139,7 +139,7 @@ export default function PlanPage() {
 
   const handleAddSlotClick = (slot: MealSlot) => {
     setPendingAddSlot(slot);
-    showToast({ variant: 'brand', message: `지도에서 장소를 검색해 ${MEAL_SLOT_LABEL[slot]}에 담아보세요` });
+    showToast({ variant: 'info', message: `지도에서 장소를 검색해 ${MEAL_SLOT_LABEL[slot]}에 담아보세요` });
   };
 
   const handleDragStart = (event: DragEvent<HTMLDivElement>, place: Place) => {
