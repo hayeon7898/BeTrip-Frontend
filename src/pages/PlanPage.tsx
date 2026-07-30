@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import type { DragEvent } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import Header from '../components/Header/Header';
 import DayTabs from '../components/DayTabs/DayTabs';
 import SearchBar from '../components/SearchBar/SearchBar';
@@ -54,8 +53,6 @@ let scheduleItemId = 0;
 const nextScheduleItemId = () => `sch-${++scheduleItemId}`;
 
 export default function PlanPage() {
-  const [searchParams] = useSearchParams();
-  const loggedIn = searchParams.get('loggedIn') === 'true';
   const { showToast } = useToast();
 
   const [activeDay, setActiveDay] = useState(1);
@@ -175,7 +172,7 @@ export default function PlanPage() {
 
   return (
     <div className={styles.page}>
-      <Header loggedIn={loggedIn} />
+      <Header />
 
       <div className={styles.topBar}>
         <DayTabs totalDays={TOTAL_DAYS} activeDay={activeDay} onSelect={setActiveDay} />

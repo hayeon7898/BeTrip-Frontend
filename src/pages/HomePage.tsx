@@ -1,3 +1,9 @@
+import { useNavigate } from 'react-router-dom';
+import Header from '../components/Header/Header';
+import Typography from '../components/Typography/Typography';
+import Button from '../components/Button/Button';
+import heroImage from '../assets/hero.png';
+import { useAuth } from '../context/AuthContext';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Header from '../components/Header/Header';
@@ -12,15 +18,15 @@ const CHARACTER_IMAGES = [character1, character2, character3];
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const { isLoggedIn } = useAuth();
   const [searchParams] = useSearchParams();
-  const loggedIn = searchParams.get('loggedIn') === 'true';
   const [heroImage] = useState(
     () => CHARACTER_IMAGES[Math.floor(Math.random() * CHARACTER_IMAGES.length)],
   );
 
   return (
     <div className={styles.page}>
-      <Header loggedIn={loggedIn} />
+      <Header />
 
       <div className={styles.main}>
         <div className={styles.hero}>
@@ -45,7 +51,7 @@ export default function HomePage() {
               일정 만들기
             </Button>
 
-            {loggedIn && (
+            {isLoggedIn && (
               <Button variant="outline" size="lg" onClick={() => navigate('/my')}>
                 내 일정 보기
               </Button>
