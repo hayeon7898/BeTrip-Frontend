@@ -1,8 +1,8 @@
-import { useNavigate} from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header/Header';
 import Typography from '../components/Typography/Typography';
 import Button from '../components/Button/Button';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { useState } from 'react';
 import character1 from '../assets/character1.png';
 import character2 from '../assets/character2.png';
