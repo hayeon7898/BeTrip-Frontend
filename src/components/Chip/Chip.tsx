@@ -10,5 +10,5 @@ export default function Chip({ selected = false, className, ...rest }: ChipProps
     .filter(Boolean)
     .join(' ');
 
-  return <button type="button" className={classes} {...rest} />;
+  return <button type="button" className={classes} aria-pressed={selected} {...rest} />;
 }

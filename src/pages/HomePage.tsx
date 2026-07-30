@@ -1,25 +1,37 @@
+import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Header from '../components/Header/Header';
 import Typography from '../components/Typography/Typography';
 import Button from '../components/Button/Button';
-import heroImage from '../assets/hero.png';
+import character1 from '../assets/character1.png';
+import character2 from '../assets/character2.png';
+import character3 from '../assets/character3.png';
 import styles from './HomePage.module.css';
+
+const CHARACTER_IMAGES = [character1, character2, character3];
 
 export default function HomePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const loggedIn = searchParams.get('loggedIn') === 'true';
+  const [heroImage] = useState(
+    () => CHARACTER_IMAGES[Math.floor(Math.random() * CHARACTER_IMAGES.length)],
+  );
 
   return (
     <div className={styles.page}>
       <Header loggedIn={loggedIn} />
 
       <div className={styles.main}>
+        <div className={styles.hero}>
+          <img src={heroImage} alt="여행 일러스트" className={styles.heroImage} />
+        </div>
+
         <div className={styles.intro}>
           <Typography variant="display">
             다음 여행,
             <br />
-            BeTrip이 짜드릴게요
+            <span className={styles.brand}>BeTrip</span>이 짜드릴게요
           </Typography>
 
           <Typography variant="body" color="secondary" className={styles.description}>
@@ -39,10 +51,6 @@ export default function HomePage() {
               </Button>
             )}
           </div>
-        </div>
-
-        <div className={styles.hero}>
-          <img src={heroImage} alt="여행 일러스트" className={styles.heroImage} />
         </div>
       </div>
     </div>
