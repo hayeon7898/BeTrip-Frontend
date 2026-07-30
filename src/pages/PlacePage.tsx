@@ -1,6 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import Header from '../components/Header/Header';
 import SearchBar from '../components/SearchBar/SearchBar';
 import Typography from '../components/Typography/Typography';
@@ -23,8 +22,6 @@ let messageId = 0;
 const nextId = () => `msg-${++messageId}`;
 
 export default function PlacePage() {
-  const [searchParams] = useSearchParams();
-  const loggedIn = searchParams.get('loggedIn') === 'true';
   const { showToast } = useToast();
 
   const [searchValue, setSearchValue] = useState('');
@@ -125,7 +122,7 @@ export default function PlacePage() {
 
   return (
     <div className={styles.page}>
-      <Header loggedIn={loggedIn} />
+      <Header />
 
       <div className={styles.content}>
       <div className={styles.searchRow}>

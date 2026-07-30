@@ -1,16 +1,23 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Header from '../components/Header/Header';
 import Typography from '../components/Typography/Typography';
 import Input from '../components/Input/Input';
 import Button from '../components/Button/Button';
 import Alert from '../components/Alert/Alert';
 import { useToast } from '../components/Toast/useToast';
+import { useAuth } from '../context/AuthContext';
 import styles from './LoginPage.module.css';
+
+interface LocationState {
+  from?: { pathname: string };
+}
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
   const { showToast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,10 +32,14 @@ export default function LoginPage() {
     }
 
     // TODO: 실제 로그인 API 연동 전까지는 입력값 검증만 하고 바로 로그인 처리합니다.
-    // 다른 페이지들도 전부 loggedIn 쿼리 파라미터로 로그인 상태를 흉내내고 있어서 동일하게 맞췄어요.
     setErrorMessage(null);
+    login();
     showToast({ variant: 'success', message: '로그인되었습니다' });
-    navigate('/home?loggedIn=true');
+
+    // ProtectedRoute가 막았던 원래 목적지가 있으면 거기로, 없으면 홈으로 이동합니다.
+    const state = location.state as LocationState | null;
+    const redirectTo = state?.from?.pathname ?? '/home';
+    navigate(redirectTo, { replace: true });
   };
 
   return (

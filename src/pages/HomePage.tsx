@@ -1,18 +1,18 @@
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header/Header';
 import Typography from '../components/Typography/Typography';
 import Button from '../components/Button/Button';
 import heroImage from '../assets/hero.png';
+import { useAuth } from '../context/AuthContext';
 import styles from './HomePage.module.css';
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const loggedIn = searchParams.get('loggedIn') === 'true';
+  const { isLoggedIn } = useAuth();
 
   return (
     <div className={styles.page}>
-      <Header loggedIn={loggedIn} />
+      <Header />
 
       <div className={styles.main}>
         <div className={styles.intro}>
@@ -33,7 +33,7 @@ export default function HomePage() {
               일정 만들기
             </Button>
 
-            {loggedIn && (
+            {isLoggedIn && (
               <Button variant="outline" size="lg" onClick={() => navigate('/my')}>
                 내 일정 보기
               </Button>
