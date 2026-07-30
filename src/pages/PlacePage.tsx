@@ -114,9 +114,7 @@ export default function PlacePage() {
 
   const handleAddPlace = (place: Place) => {
     setSavedPlaces((prev) => (prev.some((p) => p.id === place.id) ? prev : [...prev, place]));
-    // 상태 알림(success=초록)과 구분되는 브랜드 피드백이라 'brand' 톤을 사용해요.
-    // useToast/Toast 쪽에 'brand' variant가 아직 없다면 먼저 추가해주세요.
-    showToast({ variant: 'brand', message: `${place.name}을(를) ${CATEGORY_LABEL[place.category]}에 담았어요` });
+    showToast({ variant: 'info', message: `${place.name}을(를) ${CATEGORY_LABEL[place.category]}에 담았어요` });
   };
 
   const handleRemovePlace = (place: Place) => {
