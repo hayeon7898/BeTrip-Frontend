@@ -1,11 +1,5 @@
 import { useEffect, useState } from 'react';
 
-declare global {
-  interface Window {
-    kakao: any;
-  }
-}
-
 const KAKAO_MAP_KEY = import.meta.env.VITE_KAKAO_MAP_KEY as string | undefined;
 
 let loadingPromise: Promise<void> | null = null;
