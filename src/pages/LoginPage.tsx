@@ -7,7 +7,7 @@ import Input from '../components/Input/Input';
 import Button from '../components/Button/Button';
 import Alert from '../components/Alert/Alert';
 import { useToast } from '../components/Toast/useToast';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import styles from './LoginPage.module.css';
 
 interface LocationState {

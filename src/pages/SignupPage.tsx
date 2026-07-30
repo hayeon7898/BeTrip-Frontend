@@ -7,7 +7,7 @@ import Input from '../components/Input/Input';
 import Button from '../components/Button/Button';
 import Alert from '../components/Alert/Alert';
 import { useToast } from '../components/Toast/useToast';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import styles from './SignupPage.module.css';
 
 export default function SignupPage() {
@@ -65,7 +65,7 @@ export default function SignupPage() {
                 type="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                placeholder="betrip@example.com"
+                placeholder="you@example.com"
               />
             </div>
 
