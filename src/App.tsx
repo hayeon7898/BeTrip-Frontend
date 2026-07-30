@@ -1,7 +1,10 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 import DevHome from './pages/DevHome';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
 import CreatePlanPage from './pages/CreatePlanPage';
 import MyPage from './pages/MyPage';
 import PlacePage from './pages/PlacePage';
@@ -10,18 +13,49 @@ import DesignSystemPage from './pages/DesignSystemPage';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<DevHome />} />
-        <Route path="/home" element={<HomePage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/plan/create" element={<CreatePlanPage />} />
-        <Route path="/my" element={<MyPage />} />
-        <Route path="/place" element={<PlacePage />} />
-        <Route path="/plan/:id" element={<PlanPage />} />
-        <Route path="/design-system" element={<DesignSystemPage />} />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<DevHome />} />
+          <Route path="/home" element={<HomePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route
+            path="/plan/create"
+            element={
+              <ProtectedRoute>
+                <CreatePlanPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my"
+            element={
+              <ProtectedRoute>
+                <MyPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/place"
+            element={
+              <ProtectedRoute>
+                <PlacePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/plan/:id"
+            element={
+              <ProtectedRoute>
+                <PlanPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/design-system" element={<DesignSystemPage />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
