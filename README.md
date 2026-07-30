@@ -37,17 +37,17 @@ src/
 
 ## 🎨 화면 구성
 
-| Page | Route | 설명 | Login | Issue |
+| Page | Route | Role | Login | Issue #|
 | --- | --- | --- | --- | --- |
-| DevHome | `/` | 개발용 진입 페이지 | X | - |
-| HomePage | `/home` | 랜딩 페이지, 일정 만들기 진입점 | X | [#12](https://github.com/hayeon7898/betrip-frontend/issues/12)|
-| LoginPage | `/login` | 이메일/비밀번호 로그인 | X | [#9](https://github.com/hayeon7898/betrip-frontend/issues/9) |
-| SignupPage | `/signup` | 회원가입 | X | [#9](https://github.com/hayeon7898/betrip-frontend/issues/9) |
-| CreatePlanPage | `/plan/create` | 일정 생성 시작 | O | [#14](https://github.com/hayeon7898/betrip-frontend/issues/14)|
-| PlacePage | `/place` | 검색과 AI 채팅으로 장소를 추천받고 카테고리(음식점/카페/활동)별로 담기 | O | [#6](https://github.com/hayeon7898/betrip-frontend/issues/6) |
-| PlanPage | `/plan/:id` | Day별 지도(카카오맵)와 시간대별 일정 구성, 드래그앤드롭으로 장소 담기 | O | [#8](https://github.com/hayeon7898/betrip-frontend/issues/8) |
-| MyPage | `/my` | 내 일정 목록 | O | [#13](https://github.com/hayeon7898/betrip-frontend/issues/13) |
-| DesignSystemPage | `/design-system` | 공통 컴포넌트/토큰 카탈로그 (개발용) | X | [#2](https://github.com/hayeon7898/betrip-frontend/issues/2) |
+| DevHome | `/` | 개발용 진입 페이지 |❌| - |
+| HomePage | `/home` | 랜딩 페이지, 일정 만들기 진입점 |❌| [#12](https://github.com/hayeon7898/betrip-frontend/issues/12)|
+| LoginPage | `/login` | 이메일/비밀번호 로그인 |❌| [#9](https://github.com/hayeon7898/betrip-frontend/issues/9) |
+| SignupPage | `/signup` | 회원가입 |❌| [#9](https://github.com/hayeon7898/betrip-frontend/issues/9) |
+| CreatePlanPage | `/plan/create` | 일정 생성 시작 |✅| [#14](https://github.com/hayeon7898/betrip-frontend/issues/14)|
+| PlacePage | `/place` | 검색과 AI 채팅으로 장소를 추천받고 카테고리(음식점/카페/활동)별로 담기 |✅| [#6](https://github.com/hayeon7898/betrip-frontend/issues/6) |
+| PlanPage | `/plan/:id` | Day별 지도(카카오맵)와 시간대별 일정 구성, 드래그앤드롭으로 장소 담기 |✅| [#8](https://github.com/hayeon7898/betrip-frontend/issues/8) |
+| MyPage | `/my` | 내 일정 목록 |✅| [#13](https://github.com/hayeon7898/betrip-frontend/issues/13) |
+| DesignSystemPage | `/design-system` | 공통 컴포넌트/토큰 카탈로그 (개발용) |❌| [#2](https://github.com/hayeon7898/betrip-frontend/issues/2) |
 
 로그인이 필요한 페이지는 `ProtectedRoute`로 감싸져 있어, 비로그인 상태로 접근하면 `/login`으로 리다이렉트되고 로그인 성공 시 원래 가려던 페이지로 자동 복귀합니다.
 
