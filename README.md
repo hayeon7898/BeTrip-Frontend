@@ -1,47 +1,92 @@
 # BeTrip Frontend
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
+![ESLint](https://img.shields.io/badge/ESLint-10-4B32C3?logo=eslint&logoColor=white)
 
-여행 일정 만드는 웹의 React 기반 프론트엔드입니다.
-
-## 🛠 기술 스택
-
-- React 19
-- Vite 8
-- ESLint 10
+<img width="230" height="214" alt="betrip_character" src="https://github.com/user-attachments/assets/74517168-e4c2-40ba-b566-ed72799a1280" />
 
 ## 🚀 시작하기
-
 ### 요구 사항
-
 - Node.js v20.x 이상
 - npm
 
 ### 설치 및 실행
-
 ```bash
 # 1. 클론
 git clone https://github.com/사용자명/betrip-frontend.git
 cd betrip-frontend
-
 # 2. 패키지 설치
 npm install
-
 # 3. 개발 서버 실행
 npm run dev
 ```
-
 브라우저에서 http://localhost:5173 접속
 
 ## 📁 폴더 구조
-
-```
+```plain
 src/
-  components/   # 재사용 UI 컴포넌트
-  pages/        # 라우트별 페이지
+  components/   # 재사용 UI component
+  pages/        # route별 page
+  context/      # React Context (전역 상태)
   store/        # zustand store
-  hooks/        # 커스텀 훅
-  utils/        # 유틸 함수 (날짜 계산 등)
-  types/        # 타입 정의
+  hooks/        # custom hook
+  utils/        # util function (날짜 계산 등)
+  types/        # type 정의
+  assets/       # image
 ```
+
+## 🎨 화면 구성
+
+| Page | Route | 설명 | Login | Issue |
+| --- | --- | --- | --- | --- |
+| DevHome | `/` | 개발용 진입 페이지 | X | - |
+| HomePage | `/home` | 랜딩 페이지, 일정 만들기 진입점 | X | [#12](https://github.com/hayeon7898/betrip-frontend/issues/12)|
+| LoginPage | `/login` | 이메일/비밀번호 로그인 | X | [#9](https://github.com/hayeon7898/betrip-frontend/issues/9) |
+| SignupPage | `/signup` | 회원가입 | X | [#9](https://github.com/hayeon7898/betrip-frontend/issues/9) |
+| CreatePlanPage | `/plan/create` | 일정 생성 시작 | O | [#14](https://github.com/hayeon7898/betrip-frontend/issues/14)|
+| PlacePage | `/place` | 검색과 AI 채팅으로 장소를 추천받고 카테고리(음식점/카페/활동)별로 담기 | O | [#6](https://github.com/hayeon7898/betrip-frontend/issues/6) |
+| PlanPage | `/plan/:id` | Day별 지도(카카오맵)와 시간대별 일정 구성, 드래그앤드롭으로 장소 담기 | O | [#8](https://github.com/hayeon7898/betrip-frontend/issues/8) |
+| MyPage | `/my` | 내 일정 목록 | O | [#13](https://github.com/hayeon7898/betrip-frontend/issues/13) |
+| DesignSystemPage | `/design-system` | 공통 컴포넌트/토큰 카탈로그 (개발용) | X | [#2](https://github.com/hayeon7898/betrip-frontend/issues/2) |
+
+로그인이 필요한 페이지는 `ProtectedRoute`로 감싸져 있어, 비로그인 상태로 접근하면 `/login`으로 리다이렉트되고 로그인 성공 시 원래 가려던 페이지로 자동 복귀합니다.
+
+## 💻 대표 화면 흐름
+
+<table>
+  <tr>
+    <td align="center" width="30%"><strong>1️⃣Login</strong></td>
+    <td align="center" width="6%">➡️</td>
+    <td align="center" width="30%"><strong>2️⃣HomePage</strong></td>
+    <td align="center" width="6%">➡️</td>
+    <td align="center" width="30%"><strong>3️⃣CreatePlanPage</strong></td>
+  </tr>
+  <tr>
+    <td><img width="2758" height="1388" alt="image" src="https://github.com/user-attachments/assets/b68eee2c-de03-47c4-98fc-9a3d567362e0" /></td>
+    <td></td>
+    <td><img width="2879" height="1506" alt="Image" src="https://github.com/user-attachments/assets/02eca672-528b-4a8a-88da-ee5fcb48be05" /></td>
+    <td></td>
+    <td><img width="2845" height="1526" alt="Image" src="https://github.com/user-attachments/assets/bebe28a9-10ab-4286-9112-81a8ed07dbc7" /></td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td align="center" width="30%"><strong>4️⃣PlacePage</strong></td>
+    <td align="center" width="6%">➡️</td>
+    <td align="center" width="30%"><strong>5️⃣PlanPage</strong></td>
+    <td align="center" width="6%">➡️</td>
+    <td align="center" width="30%"><strong>6️⃣MyPage</strong></td>
+  </tr>
+  <tr>
+    <td><img src="https://github.com/user-attachments/assets/d82e0c42-0ba9-4a44-aa93-a46aa443a332" width="100%"></td>
+    <td></td>
+    <td><img width="2744" height="1404" alt="image" src="https://github.com/user-attachments/assets/c47665be-ad95-4a9b-92fd-832643390653" /></td>
+    <td></td>
+    <td><img width="2836" height="1524" alt="Image" src="https://github.com/user-attachments/assets/9680d69a-ead3-426c-a093-172b55c585d7" /></td>
+  </tr>
+</table>
+
 
 ## 🌿 브랜치 전략
 
@@ -50,23 +95,11 @@ src/
 | `main` | 운영 배포 |
 | `develop` | 개발 통합 |
 
-- `main`에 직접 push 금지
-- `develop`(에서 생성한 브랜치)만 사용, `develop`도 직접 push 금지 → PR 기반 merge
-
 ### 작업 순서
-
 1. **issue 생성** (이슈 템플릿 사용) → **브랜치 생성** → 작업
 2. 브랜치 네이밍: `type/#issueNumber-description`
 
-```
-feat/#12-login-api
-fix/#31-assets-chart
-refactor/#44-home-layout
-docs/#55-api-spec
-```
-
 ### 브랜치 / 커밋 타입
-
 | 타입 | 설명 | 사용 예시 |
 | --- | --- | --- |
 | `feat` | 새로운 기능 추가 | 로그인 기능 추가, 자산 조회 API 구현 |
@@ -77,51 +110,3 @@ docs/#55-api-spec
 | `test` | 테스트 코드 추가 및 수정 | 단위 테스트 추가, Mock 테스트 작성 |
 | `chore` | 설정·빌드·패키지 등 유지보수 | eslint 설정, dependency 업데이트 |
 | `hotfix` | 운영 환경 긴급 수정 | 운영 서버 장애 수정, 긴급 배포 대응 |
-
-## 📝 커밋 규칙
-
-- 형식: `type: description` + 본문에 상세 설명
-- **하나의 커밋에는 하나의 작업만** 포함
-- 커밋 내용은 **한국어**, 이슈 번호는 `(#Number)` 형식으로 footer에 작성
-- `.gitmessage` 템플릿 사용 (설정법은 하단 참고)
-
-```
-type(scope): subject
-
-# 본문 (선택) - 무엇을 왜 변경했는지, 한 줄 72자 이내 권장
-- 로그인 실패 시 예외 처리 추가
-- JWT 만료 검증 로직 수정
-
-# Footer (선택) - 관련 이슈
-Closes #이슈번호
-Related to #이슈번호
-```
-
-**작성 규칙**
-- 제목은 50자 이내
-- 제목과 본문 사이 한 줄 공백
-- 제목 끝에 마침표(.) 금지
-- 명령문 형태 사용 (예: `수정한다`(X) → `수정`(O))
-
-### .gitmessage 템플릿 설정
-
-```bash
-git config commit.template .gitmessage
-```
-
-## 🔀 PR 규칙
-
-- 작업 완료 후 PR 생성, PR 템플릿 사용
-- PR 제목 형식: `[type] 작업 내용`
-
-```
-[feat] 로그인 API 연동
-[chore] 프로젝트 초기 설정
-```
-
-## ✅ Merge 규칙
-
-- `main`에 직접 merge 금지
-- 개발 시 `develop` 브랜치만 사용 (force push, 직접 push 금지 → PR 기반 merge)
-- **squash merge** 사용 (1개 issue → 1개 branch → 여러 커밋 → 최종 squash merge)
-- merge 완료 후 브랜치 삭제
