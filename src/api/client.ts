@@ -83,12 +83,31 @@ export class ApiClientError extends Error {
   }
 }
 
+interface ValidationErrorItem {
+  loc: (string | number)[];
+  msg: string;
+  type: string;
+}
+
+interface ErrorResponseData {
+  detail?: string | ValidationErrorItem[];
+}
+
 export function toApiClientError(error: unknown): ApiClientError {
   if (axios.isAxiosError(error)) {
     const status = error.response?.status ?? 0;
-    const message =
-      (error.response?.data as { detail?: string } | undefined)?.detail ??
-      '요청 처리 중 오류가 발생했어요';
+    const data = error.response?.data as ErrorResponseData | undefined;
+
+    let message = '요청 처리 중 오류가 발생했어요';
+
+    if (typeof data?.detail === 'string') {
+      // 우리가 직접 던진 HTTPException (401, 409 등)
+      message = data.detail;
+    } else if (Array.isArray(data?.detail) && data.detail.length > 0) {
+      // Pydantic 자동 검증 실패 (422) - 첫 번째 에러 메시지만 사용
+      message = data.detail[0].msg.replace('Value error, ', '');
+    }
+
     return new ApiClientError(status, message);
   }
   return new ApiClientError(0, '알 수 없는 오류가 발생했어요');
