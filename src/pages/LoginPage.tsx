@@ -8,6 +8,8 @@ import Button from '../components/Button/Button';
 import Alert from '../components/Alert/Alert';
 import { useToast } from '../components/Toast/useToast';
 import { useAuth } from '../context/useAuth';
+import { login as loginApi } from '../api/auth';
+import { ApiError } from '../api/client';
 import styles from './LoginPage.module.css';
 
 interface LocationState {
@@ -23,7 +25,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!email.trim() || !password.trim()) {
@@ -31,15 +33,22 @@ export default function LoginPage() {
       return;
     }
 
-    // TODO: 실제 로그인 API 연동 전까지는 입력값 검증만 하고 바로 로그인 처리합니다.
     setErrorMessage(null);
-    login();
-    showToast({ variant: 'success', message: '로그인되었습니다' });
 
-    // ProtectedRoute가 막았던 원래 목적지가 있으면 거기로, 없으면 홈으로 이동합니다.
-    const state = location.state as LocationState | null;
-    const redirectTo = state?.from?.pathname ?? '/home';
-    navigate(redirectTo, { replace: true });
+    try {
+      const { access_token } = await loginApi(email, password);
+      login(access_token);
+      showToast({ variant: 'success', message: '로그인되었습니다' });
+
+      // ProtectedRoute가 막았던 원래 목적지가 있으면 거기로, 없으면 홈으로 이동합니다.
+      const state = location.state as LocationState | null;
+      const redirectTo = state?.from?.pathname ?? '/home';
+      navigate(redirectTo, { replace: true });
+    } catch (error) {
+      const message =
+        error instanceof ApiError ? error.message : '로그인 중 문제가 발생했어요';
+      setErrorMessage(message);
+    }
   };
 
   return (
