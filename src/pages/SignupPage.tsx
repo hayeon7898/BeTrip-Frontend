@@ -8,6 +8,8 @@ import Button from '../components/Button/Button';
 import Alert from '../components/Alert/Alert';
 import { useToast } from '../components/Toast/useToast';
 import { useAuth } from '../context/useAuth';
+import { signup as signupApi, login as loginApi } from '../api/auth';
+import { ApiClientError } from '../api/client';
 import styles from './SignupPage.module.css';
 
 export default function SignupPage() {
@@ -18,12 +20,14 @@ export default function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [nickname, setNickname] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!email.trim() || !password.trim() || !passwordConfirm.trim()) {
+    if (!email.trim() || !password.trim() || !passwordConfirm.trim() || !nickname.trim()) {
       setErrorMessage('모든 항목을 입력해주세요');
       return;
     }
@@ -36,11 +40,24 @@ export default function SignupPage() {
       return;
     }
 
-    // TODO: 실제 회원가입 API 연동 전까지는 입력값 검증만 하고 바로 로그인 처리합니다.
     setErrorMessage(null);
-    login();
-    showToast({ variant: 'success', message: '회원가입이 완료되었습니다' });
-    navigate('/home', { replace: true });
+    setIsSubmitting(true);
+
+    try {
+      await signupApi({ email, password, nickname });
+      const loginResult = await loginApi({ email, password });
+      login(loginResult.access_token);
+      showToast({ variant: 'success', message: '회원가입이 완료되었습니다' });
+      navigate('/home', { replace: true });
+    } catch (err) {
+      if (err instanceof ApiClientError) {
+        setErrorMessage(err.message);
+      } else {
+        setErrorMessage('회원가입 중 오류가 발생했어요. 잠시 후 다시 시도해주세요');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -71,13 +88,25 @@ export default function SignupPage() {
 
             <div className={styles.field}>
               <Typography variant="caption" color="secondary" className={styles.label}>
+                닉네임
+              </Typography>
+              <Input
+                type="text"
+                value={nickname}
+                onChange={(event) => setNickname(event.target.value)}
+                placeholder="2~50자로 입력해주세요"
+              />
+            </div>
+
+            <div className={styles.field}>
+              <Typography variant="caption" color="secondary" className={styles.label}>
                 비밀번호
               </Typography>
               <Input
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                placeholder="8자 이상 입력해주세요"
+                placeholder="대/소문자, 숫자, 특수문자 포함 8자 이상"
               />
             </div>
 
@@ -99,8 +128,14 @@ export default function SignupPage() {
               </Alert>
             )}
 
-            <Button type="submit" variant="primary" size="lg" className={styles.submitButton}>
-              회원가입
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              className={styles.submitButton}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? '가입 중...' : '회원가입'}
             </Button>
           </form>
 
