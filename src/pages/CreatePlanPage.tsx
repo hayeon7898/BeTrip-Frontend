@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header/Header';
 import Typography from '../components/Typography/Typography';
 import Input from '../components/Input/Input';
 import Button from '../components/Button/Button';
 import Chip from '../components/Chip/Chip';
 import { useToast } from '../components/Toast/useToast';
+import { createItineraryConditions } from '../api/itineraries';
+import type { Purpose, TimeSlot, TravelStyle } from '../api/itineraries';
+import { ApiError } from '../api/client';
 import { getDayDiff, getTodayKST } from '../utils/date';
 import styles from './CreatePlanPage.module.css';
 
@@ -16,24 +19,26 @@ interface Option {
   value: string;
 }
 
+// value는 카카오 실주소(place.address) ILIKE 매칭에 쓰이는 값이라 실제 행정구역
+// 표기와 어긋나면 추천(F3-1)이 항상 빈 배열로 나옴 — '제주도'는 시드 주소('제주시 ...')에
+// 부분 문자열로 없어서 '제주'로 맞춤. 나머지는 라벨과 동일.
 const regionOptions: Option[] = [
-  { label: '🏙️ 서울', value: 'SEOUL' },
-  { label: '🌊 강릉', value: 'GANGNEUNG' },
-  { label: '🏯 전주', value: 'JEONJU' },
-  { label: '🔬 대전', value: 'DAEJEON' },
-  { label: '🌉 부산', value: 'BUSAN' },
-  { label: '🌴 제주도', value: 'JEJU' },
+  { label: '🏙️ 서울', value: '서울' },
+  { label: '🌊 강릉', value: '강릉' },
+  { label: '🏯 전주', value: '전주' },
+  { label: '🔬 대전', value: '대전' },
+  { label: '🌉 부산', value: '부산' },
+  { label: '🌴 제주도', value: '제주' },
 ];
 
 const timeOfDayOptions: Option[] = [
   { label: '🌅 아침', value: 'MORNING' },
   { label: '☀️ 점심', value: 'LUNCH' },
-  { label: '🌇 저녁', value: 'DINNER' },
+  { label: '🌇 저녁', value: 'EVENING' },
 ];
 
 const transportOptions: Option[] = [
   { label: '🚗 차', value: 'CAR' },
-  { label: '🚌 대중교통', value: 'PUBLIC_TRANSPORT' },
   { label: '🚶 도보', value: 'WALK' },
 ];
 
@@ -48,7 +53,7 @@ const purposeOptions: Option[] = [
 const styleOptions: Option[] = [
   { label: '🏄 액티비티', value: 'ACTIVITY' },
   { label: '🌿 자연', value: 'NATURE' },
-  { label: '📸 관광', value: 'TOURISM' },
+  { label: '📸 관광', value: 'SIGHTSEEING' },
   { label: '🏖️ 휴양', value: 'RELAXATION' },
   { label: '🍽️ 맛집', value: 'FOOD' },
 ];
@@ -69,8 +74,6 @@ function RequiredLabel({ children }: { children: string }) {
 
 export default function CreatePlanPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const loggedIn = searchParams.get('loggedIn') === 'true';
   const { showToast } = useToast();
 
   const [startDate, setStartDate] = useState('');
@@ -133,18 +136,35 @@ export default function CreatePlanPage() {
     setDepartureTime(value);
   };
 
-  const handleCreatePlan = () => {
+  const handleCreatePlan = async () => {
     if (isSameDayTimeInvalid) {
       showToast({ variant: 'error', message: '당일치기는 출발 시간이 도착 시간보다 늦어야 해요' });
       return;
     }
-    const iId = `dev-${Date.now()}`;
-    navigate(`/place?iId=${iId}`);
+
+    try {
+      const { itinerary_id } = await createItineraryConditions({
+        start_date: startDate,
+        end_date: endDate,
+        region: region as string,
+        arrival_time: arrivalTime as TimeSlot,
+        departure_time: departureTime as TimeSlot,
+        // WALK는 백엔드에 값이 없음(CAR가 아니면 도보로 처리) — 안 보내면 도보로 계산됨
+        transportation: transport === 'CAR' ? 'CAR' : undefined,
+        purpose: (purpose as Purpose) ?? undefined,
+        styles: travelStyles as TravelStyle[],
+      });
+      navigate(`/place?iId=${itinerary_id}`);
+    } catch (error) {
+      const message =
+        error instanceof ApiError ? error.message : '일정 생성 중 문제가 발생했어요';
+      showToast({ variant: 'error', message });
+    }
   };
 
   return (
     <div className={styles.page}>
-      <Header loggedIn={loggedIn} />
+      <Header />
 
       <div className={styles.container}>
         <div className={styles.pageHeader}>
