@@ -24,8 +24,8 @@ const DEFAULT_CENTER = { lat: 37.5665, lng: 126.978 };
 export default function KakaoMap({ markers, onMarkerClick, className }: KakaoMapProps) {
   const { isLoaded, error } = useKakaoMapScript();
   const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<any>(null);
-  const overlaysRef = useRef<any[]>([]);
+  const mapRef = useRef<KakaoMapInstance | null>(null);
+  const overlaysRef = useRef<KakaoCustomOverlay[]>([]);
 
   // 지도 인스턴스는 최초 1회만 생성합니다.
   useEffect(() => {
@@ -47,9 +47,9 @@ export default function KakaoMap({ markers, onMarkerClick, className }: KakaoMap
 
   // markers가 바뀔 때마다 기존 오버레이(핀)를 지우고 다시 그립니다.
   useEffect(() => {
-    if (!isLoaded || !mapRef.current) return;
-    const { kakao } = window;
     const map = mapRef.current;
+    if (!isLoaded || !map) return;
+    const { kakao } = window;
 
     overlaysRef.current.forEach((overlay) => overlay.setMap(null));
     overlaysRef.current = [];

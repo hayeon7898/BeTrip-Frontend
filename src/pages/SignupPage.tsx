@@ -82,7 +82,7 @@ export default function SignupPage() {
                 type="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                placeholder="betrip@example.com"
+                placeholder="you@example.com"
               />
             </div>
 

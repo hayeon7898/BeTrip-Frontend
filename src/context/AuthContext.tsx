@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { AuthContext } from './AuthContextObject';
 import { refresh as refreshApi } from '../api/auth';
@@ -40,12 +40,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) {
-    throw new Error('useAuth는 AuthProvider 내부에서만 사용할 수 있어요.');
-  }
-  return ctx;
 }

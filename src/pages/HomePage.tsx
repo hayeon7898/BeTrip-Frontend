@@ -2,13 +2,8 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header/Header';
 import Typography from '../components/Typography/Typography';
 import Button from '../components/Button/Button';
-import heroImage from '../assets/hero.png';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import Header from '../components/Header/Header';
-import Typography from '../components/Typography/Typography';
-import Button from '../components/Button/Button';
 import character1 from '../assets/character1.png';
 import character2 from '../assets/character2.png';
 import character3 from '../assets/character3.png';
@@ -19,7 +14,6 @@ const CHARACTER_IMAGES = [character1, character2, character3];
 export default function HomePage() {
   const navigate = useNavigate();
   const { isLoggedIn } = useAuth();
-  const [searchParams] = useSearchParams();
   const [heroImage] = useState(
     () => CHARACTER_IMAGES[Math.floor(Math.random() * CHARACTER_IMAGES.length)],
   );
