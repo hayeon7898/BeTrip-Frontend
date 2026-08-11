@@ -8,7 +8,7 @@ import Chip from '../components/Chip/Chip';
 import { useToast } from '../components/Toast/useToast';
 import { createItineraryConditions } from '../api/itineraries';
 import type { Purpose, TimeSlot, TravelStyle } from '../api/itineraries';
-import { ApiError } from '../api/client';
+import { ApiClientError } from '../api/client';
 import { getDayDiff, getTodayKST } from '../utils/date';
 import styles from './CreatePlanPage.module.css';
 
@@ -19,9 +19,6 @@ interface Option {
   value: string;
 }
 
-// value는 카카오 실주소(place.address) ILIKE 매칭에 쓰이는 값이라 실제 행정구역
-// 표기와 어긋나면 추천(F3-1)이 항상 빈 배열로 나옴 — '제주도'는 시드 주소('제주시 ...')에
-// 부분 문자열로 없어서 '제주'로 맞춤. 나머지는 라벨과 동일.
 const regionOptions: Option[] = [
   { label: '🏙️ 서울', value: '서울' },
   { label: '🌊 강릉', value: '강릉' },
@@ -157,7 +154,7 @@ export default function CreatePlanPage() {
       navigate(`/place?iId=${itinerary_id}`);
     } catch (error) {
       const message =
-        error instanceof ApiError ? error.message : '일정 생성 중 문제가 발생했어요';
+        error instanceof ApiClientError ? error.message : '일정 생성 중 문제가 발생했어요';
       showToast({ variant: 'error', message });
     }
   };

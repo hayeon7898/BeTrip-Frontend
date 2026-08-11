@@ -1,4 +1,4 @@
-import { apiClient } from './client';
+import { apiClient, toApiClientError } from './client';
 
 export type ItineraryStatus = 'DRAFT' | 'GENERATED' | 'SAVED';
 
@@ -18,12 +18,20 @@ interface ItineraryListResponse {
 }
 
 export async function getItineraries(): Promise<ItinerarySummary[]> {
-  const { itineraries } = await apiClient.get<ItineraryListResponse>('/itineraries');
-  return itineraries;
+  try {
+    const response = await apiClient.get<ItineraryListResponse>('/itineraries');
+    return response.data.itineraries;
+  } catch (error) {
+    throw toApiClientError(error);
+  }
 }
 
-export function deleteItinerary(itineraryId: string): Promise<void> {
-  return apiClient.delete<void>(`/itineraries/${itineraryId}`);
+export async function deleteItinerary(itineraryId: string): Promise<void> {
+  try {
+    await apiClient.delete(`/itineraries/${itineraryId}`);
+  } catch (error) {
+    throw toApiClientError(error);
+  }
 }
 
 export type TimeSlot = 'MORNING' | 'LUNCH' | 'EVENING';
@@ -48,8 +56,16 @@ interface ItineraryCreateResponse {
   created_at: string;
 }
 
-export function createItineraryConditions(
+export async function createItineraryConditions(
   payload: ItineraryConditionsRequest,
 ): Promise<ItineraryCreateResponse> {
-  return apiClient.post<ItineraryCreateResponse>('/itineraries/conditions', payload);
+  try {
+    const response = await apiClient.post<ItineraryCreateResponse>(
+      '/itineraries/conditions',
+      payload,
+    );
+    return response.data;
+  } catch (error) {
+    throw toApiClientError(error);
+  }
 }
