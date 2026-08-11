@@ -8,6 +8,7 @@ import './index.css'
 import App from './App.tsx'
 import ToastProvider from './components/Toast/ToastProvider.tsx'
 
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ToastProvider>
