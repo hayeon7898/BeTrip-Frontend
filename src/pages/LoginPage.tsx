@@ -7,7 +7,9 @@ import Input from '../components/Input/Input';
 import Button from '../components/Button/Button';
 import Alert from '../components/Alert/Alert';
 import { useToast } from '../components/Toast/useToast';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
+import { login as loginApi } from '../api/auth';
+import { ApiClientError } from '../api/client';
 import styles from './LoginPage.module.css';
 
 interface LocationState {
@@ -22,8 +24,9 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!email.trim() || !password.trim()) {
@@ -31,15 +34,26 @@ export default function LoginPage() {
       return;
     }
 
-    // TODO: 실제 로그인 API 연동 전까지는 입력값 검증만 하고 바로 로그인 처리합니다.
     setErrorMessage(null);
-    login();
-    showToast({ variant: 'success', message: '로그인되었습니다' });
+    setIsSubmitting(true);
 
-    // ProtectedRoute가 막았던 원래 목적지가 있으면 거기로, 없으면 홈으로 이동합니다.
-    const state = location.state as LocationState | null;
-    const redirectTo = state?.from?.pathname ?? '/home';
-    navigate(redirectTo, { replace: true });
+    try {
+      const result = await loginApi({ email, password });
+      login(result.access_token);
+      showToast({ variant: 'success', message: '로그인되었습니다' });
+
+      const state = location.state as LocationState | null;
+      const redirectTo = state?.from?.pathname ?? '/home';
+      navigate(redirectTo, { replace: true });
+    } catch (err) {
+      if (err instanceof ApiClientError) {
+        setErrorMessage(err.message);
+      } else {
+        setErrorMessage('로그인 중 오류가 발생했어요. 잠시 후 다시 시도해주세요');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -86,8 +100,14 @@ export default function LoginPage() {
               </Alert>
             )}
 
-            <Button type="submit" variant="primary" size="lg" className={styles.submitButton}>
-              로그인
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              className={styles.submitButton}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? '로그인 중...' : '로그인'}
             </Button>
           </form>
 
