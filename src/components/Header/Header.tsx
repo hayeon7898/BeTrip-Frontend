@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import Button from '../Button/Button';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import styles from './Header.module.css';
 
 interface HeaderProps {
