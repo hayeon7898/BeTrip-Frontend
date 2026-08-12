@@ -52,7 +52,11 @@ export default function MyPage() {
       className={[styles.card, isPast ? styles.pastCard : ''].filter(Boolean).join(' ')}
       title={plan.title ?? `${plan.region} 여행`}
       subtitle={`${plan.region} · ${formatDateRange(plan.start_date, plan.end_date)}`}
-      onClick={() => navigate(`/plan/${plan.itinerary_id}`)}
+      onClick={() =>
+        navigate(
+          plan.status === 'DRAFT' ? `/place?iId=${plan.itinerary_id}` : `/plan/${plan.itinerary_id}`,
+        )
+      }
       badge={!isPast ? formatDday(plan.start_date, today) : undefined}
       onDelete={() => setDeleteTarget(plan)}
     />

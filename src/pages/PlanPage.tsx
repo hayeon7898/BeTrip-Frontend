@@ -136,6 +136,11 @@ export default function PlanPage() {
         }
         if (cancelled) return;
         const { schedules: loaded, totalDays: days } = buildSchedulesFromDetail(detail);
+        if (days === 0) {
+          showToast({ variant: 'info', message: '담긴 장소가 없어서 장소 담기 화면으로 이동할게요' });
+          navigate(`/place?iId=${id}`, { replace: true });
+          return;
+        }
         setSchedules(loaded);
         setTotalDays(days);
         setActiveDay(1);
@@ -267,19 +272,6 @@ export default function PlanPage() {
         <div className={styles.main}>
           <Typography variant="body" color="secondary">
             일정을 불러오는 중이에요...
-          </Typography>
-        </div>
-      </div>
-    );
-  }
-
-  if (totalDays === 0) {
-    return (
-      <div className={styles.page}>
-        <Header />
-        <div className={styles.main}>
-          <Typography variant="body" color="secondary">
-            담긴 장소가 없어서 일정을 만들 수 없어요. 장소를 먼저 담아주세요.
           </Typography>
         </div>
       </div>
