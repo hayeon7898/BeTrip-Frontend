@@ -361,8 +361,12 @@ export default function PlanPage() {
         </div>
 
         <div className={styles.schedulePanel}>
-          {MEAL_SLOT_ORDER.map((slot) => {
+          {MEAL_SLOT_ORDER.map((slot, slotIndex) => {
             const items = daySchedule[slot];
+            const prevSlot = slotIndex > 0 ? MEAL_SLOT_ORDER[slotIndex - 1] : null;
+            const prevSlotLastItem = prevSlot ? daySchedule[prevSlot].at(-1) : undefined;
+            const boundaryTravelMin =
+              prevSlotLastItem && items.length > 0 ? prevSlotLastItem.travelToNextMin : undefined;
             return (
               <div key={slot} className={styles.slotSection}>
                 <Typography variant="h3" className={styles.slotTitle}>
@@ -377,6 +381,9 @@ export default function PlanPage() {
                   onDragLeave={() => setDragOverSlot((prev) => (prev === slot ? null : prev))}
                   onDrop={(event) => handleDropOnSlot(event, slot)}
                 >
+                  {boundaryTravelMin !== undefined && (
+                    <div className={styles.travelDivider}>🚗 이동 {boundaryTravelMin}분</div>
+                  )}
                   {items.map((item, index) => (
                     <div key={item.id}>
                       {index > 0 && (
