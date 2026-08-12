@@ -18,6 +18,7 @@ import {
   addPlaceToItinerary,
   removePlaceFromItinerary,
 } from '../api/place';
+import { generatePlan } from '../api/plan';
 import { toApiClientError } from '../api/client';
 import styles from './PlacePage.module.css';
 
@@ -225,8 +226,18 @@ export default function PlacePage() {
     }
   };
 
-  const handleGoToPlan = () => {
-    navigate(`/plan/${itineraryId}`);
+  const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
+
+  const handleGoToPlan = async () => {
+    setIsGeneratingPlan(true);
+    try {
+      await generatePlan(itineraryId);
+      navigate(`/plan/${itineraryId}`);
+    } catch {
+      showToast({ variant: 'error', message: '일정 생성에 실패했어요. 잠시 후 다시 시도해주세요' });
+    } finally {
+      setIsGeneratingPlan(false);
+    }
   };
 
   return (
@@ -400,9 +411,9 @@ export default function PlacePage() {
               size="md"
               className={styles.goToPlanButton}
               onClick={handleGoToPlan}
-              disabled={savedPlaces.length === 0}
+              disabled={savedPlaces.length === 0 || isGeneratingPlan}
             >
-              일정 만들기
+              {isGeneratingPlan ? '일정 생성 중...' : '일정 만들기'}
             </Button>
           </div>
         </div>
