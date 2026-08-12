@@ -14,6 +14,7 @@ export interface ScheduleItem {
   id: string;
   time: string;
   place: Place;
+  travelToNextMin?: number;
 }
 
 export type DaySchedule = Record<MealSlot, ScheduleItem[]>;

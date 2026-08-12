@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { DragEvent } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/Header/Header';
 import DayTabs from '../components/DayTabs/DayTabs';
 import SearchBar from '../components/SearchBar/SearchBar';
@@ -13,16 +14,17 @@ import type { MapMarker } from '../components/Map/KakaoMap';
 import { useToast } from '../components/Toast/useToast';
 import { MOCK_PLACES } from '../mocks/PlanMockData';
 import type { Place } from '../types/place';
+import { apiCategoryToUi } from '../types/place';
 import {
   MEAL_SLOT_ORDER,
   MEAL_SLOT_LABEL,
   createEmptyDaySchedule,
 } from '../types/plan';
 import type { MealSlot, DaySchedule, ScheduleItem } from '../types/plan';
+import { getItineraryDetail } from '../api/itineraries';
+import type { ItineraryDetail, TimeSlot as ApiTimeSlot } from '../api/itineraries';
+import { generatePlan, savePlan } from '../api/plan';
 import styles from './PlanPage.module.css';
-
-// 데모 고정값입니다. 실제로는 일정 생성 단계(기간 입력)에서 정해진 여행 일수를 받아와야 해요.
-const TOTAL_DAYS = 4;
 
 const SLOT_START_TIME: Record<MealSlot, string> = {
   morning: '08:00',
@@ -43,7 +45,7 @@ function nextTimeForSlot(slot: MealSlot, existingCount: number) {
   return addMinutes(SLOT_START_TIME[slot], existingCount * 90);
 }
 
-// 실제 경로 API 연동 전까지 쓰는 더미 이동시간(문자열 시드 기반이라 항상 같은 값이 나와요).
+// TODO : 실제 transit API로 변경 후 테스트 (plan page에서 추가/삭제 후 이동 시간 계산)
 function dummyTravelMinutes(fromId: string, toId: string) {
   const seed = `${fromId}${toId}`.split('').reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
   return 8 + (seed % 20);
@@ -52,17 +54,61 @@ function dummyTravelMinutes(fromId: string, toId: string) {
 let scheduleItemId = 0;
 const nextScheduleItemId = () => `sch-${++scheduleItemId}`;
 
+const API_TO_MEAL_SLOT: Record<ApiTimeSlot, MealSlot> = {
+  MORNING: 'morning',
+  LUNCH: 'lunch',
+  EVENING: 'dinner',
+};
+
+function buildSchedulesFromDetail(detail: ItineraryDetail): {
+  schedules: Record<number, DaySchedule>;
+  totalDays: number;
+} {
+  const totalDays = detail.schedule?.days.length ?? 0;
+  const schedules: Record<number, DaySchedule> = {};
+  for (let day = 1; day <= totalDays; day += 1) {
+    schedules[day] = createEmptyDaySchedule();
+  }
+  if (!detail.schedule) return { schedules, totalDays };
+
+  const placeById = new Map(detail.places.map((place) => [place.place_id, place]));
+
+  detail.schedule.days.forEach((dayData) => {
+    dayData.items.forEach((apiItem) => {
+      const placeInfo = placeById.get(apiItem.place_id);
+      if (!placeInfo) return;
+      const slot = API_TO_MEAL_SLOT[apiItem.time_slot];
+      const item: ScheduleItem = {
+        id: placeInfo.itinerary_place_id,
+        time: apiItem.start_time ?? '',
+        place: {
+          id: placeInfo.place_id,
+          name: apiItem.name,
+          category: apiCategoryToUi(placeInfo.category),
+          address: placeInfo.address ?? undefined,
+          thumbnailUrl: placeInfo.thumbnail_url ?? undefined,
+          latitude: placeInfo.lat,
+          longitude: placeInfo.lng,
+        },
+        travelToNextMin: apiItem.travel_time_to_next_min ?? undefined,
+      };
+      schedules[dayData.day][slot].push(item);
+    });
+  });
+
+  return { schedules, totalDays };
+}
+
 export default function PlanPage() {
   const { showToast } = useToast();
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
 
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [totalDays, setTotalDays] = useState(0);
   const [activeDay, setActiveDay] = useState(1);
-  const [schedules, setSchedules] = useState<Record<number, DaySchedule>>(() => {
-    const initial: Record<number, DaySchedule> = {};
-    for (let day = 1; day <= TOTAL_DAYS; day += 1) {
-      initial[day] = createEmptyDaySchedule();
-    }
-    return initial;
-  });
+  const [schedules, setSchedules] = useState<Record<number, DaySchedule>>({});
 
   const [mapSearchValue, setMapSearchValue] = useState('');
   const [mapResults, setMapResults] = useState<Place[]>([]);
@@ -72,7 +118,47 @@ export default function PlanPage() {
   const [dragOverSlot, setDragOverSlot] = useState<MealSlot | null>(null);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
 
-  const daySchedule = schedules[activeDay];
+  useEffect(() => {
+    if (!id) {
+      navigate('/my', { replace: true });
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        let detail = await getItineraryDetail(id);
+        if (!detail.schedule) {
+          // 방어 코드: PlacePage의 "일정 만들기"를 거치지 않고 URL로 직접 들어온 경우 등.
+          const generated = await generatePlan(id);
+          detail = { ...detail, status: generated.status, schedule: generated.schedule };
+        }
+        if (cancelled) return;
+        const { schedules: loaded, totalDays: days } = buildSchedulesFromDetail(detail);
+        if (days === 0) {
+          showToast({ variant: 'info', message: '담긴 장소가 없어서 장소 담기 화면으로 이동할게요' });
+          navigate(`/place?iId=${id}`, { replace: true });
+          return;
+        }
+        setSchedules(loaded);
+        setTotalDays(days);
+        setActiveDay(1);
+      } catch {
+        if (cancelled) return;
+        showToast({ variant: 'error', message: '일정을 불러오지 못했어요' });
+        navigate('/my', { replace: true });
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id, navigate, showToast]);
+
+  const daySchedule = schedules[activeDay] ?? createEmptyDaySchedule();
 
   const flatItems = useMemo(() => {
     const list: ScheduleItem[] = [];
@@ -110,7 +196,7 @@ export default function PlanPage() {
 
   const addPlaceToSlot = (place: Place, slot: MealSlot) => {
     setSchedules((prev) => {
-      const day = prev[activeDay];
+      const day = prev[activeDay] ?? createEmptyDaySchedule();
       const item: ScheduleItem = {
         id: nextScheduleItemId(),
         time: nextTimeForSlot(slot, day[slot].length),
@@ -123,10 +209,10 @@ export default function PlanPage() {
   };
 
   const removeScheduleItem = (slot: MealSlot, itemId: string) => {
-    setSchedules((prev) => ({
-      ...prev,
-      [activeDay]: { ...prev[activeDay], [slot]: prev[activeDay][slot].filter((i) => i.id !== itemId) },
-    }));
+    setSchedules((prev) => {
+      const day = prev[activeDay] ?? createEmptyDaySchedule();
+      return { ...prev, [activeDay]: { ...day, [slot]: day[slot].filter((i) => i.id !== itemId) } };
+    });
   };
 
   const handleResultAddClick = (place: Place) => {
@@ -166,18 +252,40 @@ export default function PlanPage() {
     }
   };
 
-  const handleSavePlan = () => {
-    showToast({ variant: 'success', message: '일정이 저장되었습니다' });
+  const handleSavePlan = async () => {
+    if (!id) return;
+    setIsSaving(true);
+    try {
+      await savePlan(id);
+      showToast({ variant: 'success', message: '일정이 저장되었습니다' });
+    } catch {
+      showToast({ variant: 'error', message: '일정 저장에 실패했어요. 잠시 후 다시 시도해주세요' });
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className={styles.page}>
+        <Header />
+        <div className={styles.main}>
+          <Typography variant="body" color="secondary">
+            일정을 불러오는 중이에요...
+          </Typography>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>
       <Header />
 
       <div className={styles.topBar}>
-        <DayTabs totalDays={TOTAL_DAYS} activeDay={activeDay} onSelect={setActiveDay} />
-        <Button variant="primary" size="md" onClick={handleSavePlan}>
-          일정 저장하기
+        <DayTabs totalDays={totalDays} activeDay={activeDay} onSelect={setActiveDay} />
+        <Button variant="primary" size="md" onClick={handleSavePlan} disabled={isSaving}>
+          {isSaving ? '저장 중...' : '일정 저장하기'}
         </Button>
       </div>
 
@@ -245,8 +353,12 @@ export default function PlanPage() {
         </div>
 
         <div className={styles.schedulePanel}>
-          {MEAL_SLOT_ORDER.map((slot) => {
+          {MEAL_SLOT_ORDER.map((slot, slotIndex) => {
             const items = daySchedule[slot];
+            const prevSlot = slotIndex > 0 ? MEAL_SLOT_ORDER[slotIndex - 1] : null;
+            const prevSlotLastItem = prevSlot ? daySchedule[prevSlot].at(-1) : undefined;
+            const boundaryTravelMin =
+              prevSlotLastItem && items.length > 0 ? prevSlotLastItem.travelToNextMin : undefined;
             return (
               <div key={slot} className={styles.slotSection}>
                 <Typography variant="h3" className={styles.slotTitle}>
@@ -261,11 +373,15 @@ export default function PlanPage() {
                   onDragLeave={() => setDragOverSlot((prev) => (prev === slot ? null : prev))}
                   onDrop={(event) => handleDropOnSlot(event, slot)}
                 >
+                  {boundaryTravelMin !== undefined && (
+                    <div className={styles.travelDivider}>🚗 이동 {boundaryTravelMin}분</div>
+                  )}
                   {items.map((item, index) => (
                     <div key={item.id}>
                       {index > 0 && (
                         <div className={styles.travelDivider}>
-                          🚗 이동 {dummyTravelMinutes(items[index - 1].place.id, item.place.id)}분
+                          🚗 이동 {items[index - 1].travelToNextMin ??
+                            dummyTravelMinutes(items[index - 1].place.id, item.place.id)}분
                         </div>
                       )}
                       <PlaceListItem
