@@ -77,18 +77,18 @@ export default function PlacePage() {
   }, [itineraryId, showToast]);
 
   // 검색 드롭다운 바깥 클릭 시 닫기
-  useEffect(() => {
-    if (!isSearchOpen) return;
+  // useEffect(() => {
+  //   if (!isSearchOpen) return;
 
-    const handleOutsideClick = (event: MouseEvent) => {
-      if (!searchWrapperRef.current?.contains(event.target as Node)) {
-        setIsSearchOpen(false);
-      }
-    };
+  //   const handleOutsideClick = (event: MouseEvent) => {
+  //     if (!searchWrapperRef.current?.contains(event.target as Node)) {
+  //       setIsSearchOpen(false);
+  //     }
+  //   };
 
-    document.addEventListener('mousedown', handleOutsideClick);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
-  }, [isSearchOpen]);
+  //   document.addEventListener('mousedown', handleOutsideClick);
+  //   return () => document.removeEventListener('mousedown', handleOutsideClick);
+  // }, [isSearchOpen]);
 
   const savedByCategory = useMemo(() => {
     const grouped: Record<PlaceCategory, Place[]> = { restaurant: [], cafe: [], activity: [] };
@@ -245,43 +245,55 @@ export default function PlacePage() {
           />
 
           {isSearchOpen && (
-            <div className={styles.searchDropdown}>
-              <div className={styles.searchDropdownHeader}>
-                <Typography variant="caption" color="tertiary">
-                  {isSearchLoading ? '검색 중...' : `검색 결과 ${searchResults.length}건`}
-                </Typography>
-                <button
-                  type="button"
-                  className={styles.searchDropdownClose}
-                  onClick={() => setIsSearchOpen(false)}
-                  aria-label="검색 결과 닫기"
-                >
-                  ×
-                </button>
-              </div>
+  <div className={styles.searchDropdown}>
+    <div className={styles.searchDropdownHeader}>
+      <Typography variant="caption" color="tertiary">
+        {isSearchLoading ? '검색 중...' : `검색 결과 ${searchResults.length}건`}
+      </Typography>
+      <button
+        type="button"
+        className={styles.searchDropdownClose}
+        onClick={() => setIsSearchOpen(false)}
+        aria-label="검색 결과 닫기"
+      >
+        ×
+      </button>
+    </div>
 
-              {!isSearchLoading && searchResults.length === 0 ? (
-                <div className={styles.searchDropdownEmpty}>
-                  <Typography variant="caption" color="tertiary">
-                    검색 결과가 없어요
-                  </Typography>
-                </div>
-              ) : (
-                <div className={styles.searchDropdownList}>
-                  {searchResults.map((place) => (
-                    <PlaceListItem
-                      key={place.id}
-                      place={place}
-                      onClick={setSelectedPlace}
-                    />
-                  ))}
-                </div>
-              )}
+      {isSearchLoading ? (
+        <div className={styles.searchDropdownList}>
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className={styles.skeletonItem}>
+              <div className={styles.skeletonThumb} />
+              <div className={styles.skeletonLines}>
+                <div className={styles.skeletonLine} style={{ width: '55%' }} />
+                <div className={styles.skeletonLine} style={{ width: '35%' }} />
+              </div>
+            </div>
+          ))}
+        </div>
+          ) : searchResults.length === 0 ? (
+            <div className={styles.searchDropdownEmpty}>
+              <Typography variant="caption" color="tertiary">
+                검색 결과가 없어요
+              </Typography>
+            </div>
+          ) : (
+            <div className={styles.searchDropdownList}>
+              {searchResults.map((place) => (
+                <PlaceListItem
+                  key={place.id}
+                  place={place}
+                  variant="comfortable"
+                  onClick={setSelectedPlace}
+                />
+              ))}
             </div>
           )}
         </div>
+      )}
       </div>
-
+    </div>
       <div className={styles.main}>
         <div className={styles.chatPanel}>
           <div className={styles.panelHeader}>

@@ -40,8 +40,10 @@
   background: #fff;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg, 12px);
-  box-shadow: 0 8px 24px rgba(27, 28, 43, 0.12);
-  max-height: 420px;
+  box-shadow:
+    0 2px 6px rgba(27, 28, 43, 0.06),
+    0 12px 32px rgba(27, 28, 43, 0.14);
+  max-height: 480px;
   overflow-y: auto;
   transform-origin: top;
   animation: searchDropdownExpand 0.18s ease-out;
@@ -67,6 +69,9 @@
 }
 
 .searchDropdownClose {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 24px;
   height: 24px;
   border-radius: 50%;
@@ -76,9 +81,11 @@
   font-size: 16px;
   line-height: 1;
   cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .searchDropdownClose:hover {
+  background: var(--color-sub-50);
   color: var(--color-text-secondary);
 }
 
@@ -88,11 +95,54 @@
 }
 
 .searchDropdownList {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px 12px; /* 세로 간격 4px, 가로(열 사이) 간격 12px */
   padding: 8px;
 }
+
+/* --- 스켈레톤 로딩 (신규 추가) --- */
+
+.skeletonItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 8px;
+}
+
+.skeletonThumb {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-lg, 12px);
+  background: var(--color-sub-50);
+  flex-shrink: 0;
+  animation: skeletonPulse 1.4s ease-in-out infinite;
+}
+
+.skeletonLines {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeletonLine {
+  height: 12px;
+  border-radius: 6px;
+  background: var(--color-sub-50);
+  animation: skeletonPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes skeletonPulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 
 .main {
   flex: 1;
@@ -263,7 +313,6 @@
 
 .savedPanelFooter {
   padding: 12px 20px;
-  border-top: 1px solid var(--color-border);
 }
 
 .goToPlanButton {
