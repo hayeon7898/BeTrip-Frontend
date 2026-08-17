@@ -24,8 +24,8 @@ export default function PlaceListItem({ place, time, onClick, onRemove }: PlaceL
         onClick={() => onClick?.(place)}
         aria-label={`${place.name} 상세정보 보기`}
       >
-        {place.image ? (
-          <img src={place.image} alt={place.name} className={styles.thumb} />
+        {place.thumbnailUrl ? (
+          <img src={place.thumbnailUrl} alt={place.name} className={styles.thumb} />
         ) : (
           <div className={styles.thumbPlaceholder} />
         )}
@@ -34,7 +34,7 @@ export default function PlaceListItem({ place, time, onClick, onRemove }: PlaceL
             {place.name}
           </Typography>
           <Typography variant="caption" color="tertiary">
-            {place.rating.toFixed(1)} · {place.priceLabel}
+            {place.address ?? '주소 정보 없음'}
           </Typography>
         </div>
       </button>

@@ -28,8 +28,8 @@ export default function PlaceCard({ place, added = false, onAdd, onClick }: Plac
         onClick={() => onClick?.(place)}
         aria-label={`${place.name} 상세정보 보기`}
       >
-        {place.image ? (
-          <img src={place.image} alt={place.name} className={styles.thumbnail} />
+        {place.thumbnailUrl ? (
+          <img src={place.thumbnailUrl} alt={place.name} className={styles.thumbnail} />
         ) : (
           <div className={styles.thumbnailPlaceholder}>
             <Typography variant="caption" color="tertiary">
@@ -49,7 +49,7 @@ export default function PlaceCard({ place, added = false, onAdd, onClick }: Plac
           {place.name}
         </Typography>
         <Typography variant="caption" color="secondary" className={styles.meta}>
-          {place.rating.toFixed(1)} · {place.tags.join(' · ')} · {place.priceLabel}
+          {place.address ?? '주소 정보 없음'}
         </Typography>
       </button>
 
