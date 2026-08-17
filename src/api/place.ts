@@ -1,6 +1,7 @@
 import { apiClient, toApiClientError } from './client';
 import type { ApiPlaceCategory, ApiPlaceItem, Place } from '../types/place';
 import { mapApiPlace } from '../types/place';
+import type { TimeSlot } from './itineraries';
 
 // ------------------------------------------------------------------
 // 장소 추천 GET /itineraries/{iId}/places/recommend
@@ -33,14 +34,21 @@ interface ItineraryPlaceCreateResponse {
   place_id: string;
 }
 
+export interface AddPlaceSchedule {
+  day: number;
+  time_slot: TimeSlot;
+  order_in_day: number;
+}
+
 export async function addPlaceToItinerary(
   itineraryId: string,
   placeId: string,
+  schedule?: AddPlaceSchedule,
 ): Promise<string> {
   try {
     const response = await apiClient.post<ItineraryPlaceCreateResponse>(
       `/itineraries/${itineraryId}/places`,
-      { place_id: placeId },
+      schedule ? { place_id: placeId, ...schedule } : { place_id: placeId },
     );
     return response.data.itinerary_place_id;
   } catch (error) {

@@ -12,7 +12,6 @@ import PlaceDetailModal from '../components/Modal/PlaceDetailModal';
 import KakaoMap from '../components/Map/KakaoMap';
 import type { MapMarker } from '../components/Map/KakaoMap';
 import { useToast } from '../components/Toast/useToast';
-import { MOCK_PLACES } from '../mocks/PlanMockData';
 import type { Place } from '../types/place';
 import { apiCategoryToUi } from '../types/place';
 import {
@@ -24,40 +23,21 @@ import type { MealSlot, DaySchedule, ScheduleItem } from '../types/plan';
 import { getItineraryDetail } from '../api/itineraries';
 import type { ItineraryDetail, TimeSlot as ApiTimeSlot } from '../api/itineraries';
 import { generatePlan, savePlan } from '../api/plan';
+import { addPlaceToItinerary, removePlaceFromItinerary } from '../api/place';
+import { searchPlaces } from '../api/map';
+import { toApiClientError } from '../api/client';
 import styles from './PlanPage.module.css';
-
-const SLOT_START_TIME: Record<MealSlot, string> = {
-  morning: '08:00',
-  lunch: '12:00',
-  dinner: '18:00',
-};
-
-function addMinutes(time: string, minutes: number) {
-  const [h, m] = time.split(':').map(Number);
-  const total = h * 60 + m + minutes;
-  const hh = Math.floor((((total % (24 * 60)) + 24 * 60) % (24 * 60)) / 60);
-  const mm = ((total % 60) + 60) % 60;
-  return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
-}
-
-// 이미 담긴 항목 수를 기준으로 슬롯 시작 시간에서 90분씩 밀어 자동 배정합니다.
-function nextTimeForSlot(slot: MealSlot, existingCount: number) {
-  return addMinutes(SLOT_START_TIME[slot], existingCount * 90);
-}
-
-// TODO : 실제 transit API로 변경 후 테스트 (plan page에서 추가/삭제 후 이동 시간 계산)
-function dummyTravelMinutes(fromId: string, toId: string) {
-  const seed = `${fromId}${toId}`.split('').reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
-  return 8 + (seed % 20);
-}
-
-let scheduleItemId = 0;
-const nextScheduleItemId = () => `sch-${++scheduleItemId}`;
 
 const API_TO_MEAL_SLOT: Record<ApiTimeSlot, MealSlot> = {
   MORNING: 'morning',
   LUNCH: 'lunch',
   EVENING: 'dinner',
+};
+
+const MEAL_SLOT_TO_API: Record<MealSlot, ApiTimeSlot> = {
+  morning: 'MORNING',
+  lunch: 'LUNCH',
+  dinner: 'EVENING',
 };
 
 function buildSchedulesFromDetail(detail: ItineraryDetail): {
@@ -91,6 +71,7 @@ function buildSchedulesFromDetail(detail: ItineraryDetail): {
           longitude: placeInfo.lng,
         },
         travelToNextMin: apiItem.travel_time_to_next_min ?? undefined,
+        orderInDay: apiItem.order_in_day,
       };
       schedules[dayData.day][slot].push(item);
     });
@@ -109,10 +90,13 @@ export default function PlanPage() {
   const [totalDays, setTotalDays] = useState(0);
   const [activeDay, setActiveDay] = useState(1);
   const [schedules, setSchedules] = useState<Record<number, DaySchedule>>({});
+  // 담기/삭제 처리 중 재진입(중복 클릭) 방지 플래그
+  const [isMutatingSchedule, setIsMutatingSchedule] = useState(false);
 
   const [mapSearchValue, setMapSearchValue] = useState('');
   const [mapResults, setMapResults] = useState<Place[]>([]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isMapSearchLoading, setIsMapSearchLoading] = useState(false);
   // '+ OO 일정 더 추가하기'를 눌러 어느 시간대에 담을지 지정해둔 상태 (드래그 없이도 담을 수 있는 폴백 경로)
   const [pendingAddSlot, setPendingAddSlot] = useState<MealSlot | null>(null);
   const [dragOverSlot, setDragOverSlot] = useState<MealSlot | null>(null);
@@ -184,35 +168,112 @@ export default function PlanPage() {
     if (item) setSelectedPlace(item.place);
   };
 
-  const handleMapSearchSubmit = (query: string) => {
-    const results = MOCK_PLACES.filter(
-      (place) => place.name.includes(query) || place.tags.some((tag) => tag.includes(query)),
-    );
-    setMapResults(results);
-    if (results.length === 0) {
-      showToast({ variant: 'warning', message: `'${query}'와(과) 일치하는 장소가 없어요` });
+  const handleMapSearchSubmit = async (query: string) => {
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    setIsMapSearchLoading(true);
+    try {
+      const results = await searchPlaces(trimmed);
+      setMapResults(results);
+      if (results.length === 0) {
+        showToast({ variant: 'warning', message: `'${trimmed}'와(과) 일치하는 장소가 없어요` });
+      }
+    } catch (error) {
+      const apiError = toApiClientError(error);
+      setMapResults([]);
+      showToast({
+        variant: 'error',
+        message: apiError.message ?? '검색에 실패했어요. 잠시 후 다시 시도해주세요',
+      });
+    } finally {
+      setIsMapSearchLoading(false);
     }
   };
 
-  const addPlaceToSlot = (place: Place, slot: MealSlot) => {
-    setSchedules((prev) => {
-      const day = prev[activeDay] ?? createEmptyDaySchedule();
-      const item: ScheduleItem = {
-        id: nextScheduleItemId(),
-        time: nextTimeForSlot(slot, day[slot].length),
-        place,
-      };
-      return { ...prev, [activeDay]: { ...day, [slot]: [...day[slot], item] } };
-    });
-    showToast({ variant: 'info', message: `${place.name}을(를) ${MEAL_SLOT_LABEL[slot]} 일정에 담았어요` });
-    setPendingAddSlot(null);
+  // 담기/삭제 직후 상세를 다시 조회해 스케줄 전체를 갱신합니다.
+  const refreshSchedules = async (currentDay: number) => {
+    if (!id) return;
+    const detail = await getItineraryDetail(id);
+    const { schedules: loaded, totalDays: days } = buildSchedulesFromDetail(detail);
+    setSchedules(loaded);
+    setTotalDays(days);
+    setActiveDay((prev) => (prev <= days ? prev : currentDay));
   };
 
-  const removeScheduleItem = (slot: MealSlot, itemId: string) => {
-    setSchedules((prev) => {
-      const day = prev[activeDay] ?? createEmptyDaySchedule();
-      return { ...prev, [activeDay]: { ...day, [slot]: day[slot].filter((i) => i.id !== itemId) } };
-    });
+  const addPlaceToSlot = async (place: Place, slot: MealSlot) => {
+    if (!id) return;
+    if (isMutatingSchedule) {
+      showToast({ variant: 'warning', message: '처리 중이에요. 잠시만 기다려주세요' });
+      return;
+    }
+    setIsMutatingSchedule(true);
+    try {
+      const day = activeDay;
+      const daySchedule = schedules[day] ?? createEmptyDaySchedule();
+      const slotItems = daySchedule[slot];
+      // 배열 길이가 아니라 기존 orderInDay 최댓값+1로 계산 — 삭제로 생긴 gap 때문에
+      // 배열 길이를 쓰면 살아남은 항목과 슬롯이 충돌해 409가 날 수 있음.
+      const orderInDay =
+        slotItems.length === 0 ? 1 : Math.max(...slotItems.map((i) => i.orderInDay)) + 1;
+      const timeSlotApi = MEAL_SLOT_TO_API[slot];
+
+      try {
+        await addPlaceToItinerary(id, place.id, {
+          day,
+          time_slot: timeSlotApi,
+          order_in_day: orderInDay,
+        });
+      } catch (error) {
+        const apiError = toApiClientError(error);
+        showToast({
+          variant: 'error',
+          message: apiError.message ?? '장소를 담지 못했어요. 잠시 후 다시 시도해주세요',
+        });
+        return;
+      }
+
+      try {
+        await refreshSchedules(day);
+      } catch {
+        showToast({ variant: 'warning', message: '최신 일정을 불러오지 못했어요. 새로고침해주세요' });
+        return;
+      }
+      showToast({ variant: 'info', message: `${place.name}을(를) ${MEAL_SLOT_LABEL[slot]} 일정에 담았어요` });
+      setPendingAddSlot(null);
+    } finally {
+      setIsMutatingSchedule(false);
+    }
+  };
+
+  const removeScheduleItem = async (itemId: string) => {
+    if (!id) return;
+    if (isMutatingSchedule) {
+      showToast({ variant: 'warning', message: '처리 중이에요. 잠시만 기다려주세요' });
+      return;
+    }
+    setIsMutatingSchedule(true);
+    try {
+      const day = activeDay;
+
+      try {
+        await removePlaceFromItinerary(id, itemId);
+      } catch (error) {
+        const apiError = toApiClientError(error);
+        showToast({
+          variant: 'error',
+          message: apiError.message ?? '장소를 삭제하지 못했어요. 잠시 후 다시 시도해주세요',
+        });
+        return;
+      }
+
+      try {
+        await refreshSchedules(day);
+      } catch {
+        showToast({ variant: 'warning', message: '최신 일정을 불러오지 못했어요. 새로고침해주세요' });
+      }
+    } finally {
+      setIsMutatingSchedule(false);
+    }
   };
 
   const handleResultAddClick = (place: Place) => {
@@ -220,7 +281,7 @@ export default function PlanPage() {
       showToast({ variant: 'warning', message: '먼저 담을 시간대의 "+ 일정 더 추가하기"를 눌러주세요' });
       return;
     }
-    addPlaceToSlot(place, pendingAddSlot);
+    void addPlaceToSlot(place, pendingAddSlot);
   };
 
   const handleAddSlotClick = (slot: MealSlot) => {
@@ -246,7 +307,7 @@ export default function PlanPage() {
     if (!raw) return;
     try {
       const place: Place = JSON.parse(raw);
-      addPlaceToSlot(place, slot);
+      void addPlaceToSlot(place, slot);
     } catch {
       // 드래그 데이터가 손상된 경우 무시합니다.
     }
@@ -314,6 +375,12 @@ export default function PlanPage() {
                   }
                 />
 
+                {isMapSearchLoading && (
+                  <Typography variant="caption" color="tertiary" className={styles.pendingHint}>
+                    검색 중...
+                  </Typography>
+                )}
+
                 {mapResults.length > 0 && (
                   <div className={styles.mapResultsPanel}>
                     {pendingAddSlot && (
@@ -378,17 +445,16 @@ export default function PlanPage() {
                   )}
                   {items.map((item, index) => (
                     <div key={item.id}>
-                      {index > 0 && (
+                      {index > 0 && items[index - 1].travelToNextMin !== undefined && (
                         <div className={styles.travelDivider}>
-                          🚗 이동 {items[index - 1].travelToNextMin ??
-                            dummyTravelMinutes(items[index - 1].place.id, item.place.id)}분
+                          🚗 이동 {items[index - 1].travelToNextMin}분
                         </div>
                       )}
                       <PlaceListItem
                         place={item.place}
                         time={item.time}
                         onClick={setSelectedPlace}
-                        onRemove={() => removeScheduleItem(slot, item.id)}
+                        onRemove={() => void removeScheduleItem(item.id)}
                       />
                     </div>
                   ))}
@@ -415,7 +481,7 @@ export default function PlanPage() {
             showToast({ variant: 'warning', message: '먼저 담을 시간대의 "+ 일정 더 추가하기"를 눌러주세요' });
             return;
           }
-          addPlaceToSlot(place, pendingAddSlot);
+          void addPlaceToSlot(place, pendingAddSlot);
           setSelectedPlace(null);
         }}
       />

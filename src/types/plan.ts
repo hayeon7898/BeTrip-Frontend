@@ -15,10 +15,20 @@ export interface ScheduleItem {
   time: string;
   place: Place;
   travelToNextMin?: number;
+  orderInDay: number;
 }
 
 export type DaySchedule = Record<MealSlot, ScheduleItem[]>;
 
 export function createEmptyDaySchedule(): DaySchedule {
   return { morning: [], lunch: [], dinner: [] };
+}
+
+export interface FlatScheduleEntry {
+  item: ScheduleItem;
+  slot: MealSlot;
+}
+
+export function flattenDay(daySchedule: DaySchedule): FlatScheduleEntry[] {
+  return MEAL_SLOT_ORDER.flatMap((slot) => daySchedule[slot].map((item) => ({ item, slot })));
 }

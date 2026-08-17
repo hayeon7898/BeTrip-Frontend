@@ -35,3 +35,39 @@ export async function getPlaceDetail(placeId: string): Promise<PlaceDetail> {
     throw toApiClientError(error);
   }
 }
+
+// ------------------------------------------------------------------
+// 이동 시간 계산 GET /map/transit
+// ------------------------------------------------------------------
+export type TransitMode = 'CAR' | 'WALK';
+
+interface TransitApiResponse {
+  duration_min: number;
+  distance_km: number;
+  mode: TransitMode;
+}
+
+export interface Transit {
+  durationMin: number;
+  distanceKm: number;
+  mode: TransitMode;
+}
+
+export async function getTransit(
+  fromPlaceId: string,
+  toPlaceId: string,
+  mode: TransitMode,
+): Promise<Transit> {
+  try {
+    const response = await apiClient.get<TransitApiResponse>('/map/transit', {
+      params: { from: fromPlaceId, to: toPlaceId, mode },
+    });
+    return {
+      durationMin: response.data.duration_min,
+      distanceKm: response.data.distance_km,
+      mode: response.data.mode,
+    };
+  } catch (error) {
+    throw toApiClientError(error);
+  }
+}
