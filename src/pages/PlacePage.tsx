@@ -12,12 +12,8 @@ import PlaceDetailModal from '../components/Modal/PlaceDetailModal';
 import { useToast } from '../components/Toast/useToast';
 import { CATEGORY_LABEL, CATEGORY_ORDER, uiCategoryToApi } from '../types/place';
 import type { Place, PlaceCategory } from '../types/place';
-import {
-  recommendPlaces,
-  searchPlaces,
-  addPlaceToItinerary,
-  removePlaceFromItinerary,
-} from '../api/place';
+import { recommendPlaces, addPlaceToItinerary, removePlaceFromItinerary } from '../api/place';
+import { searchPlaces } from '../api/map';
 import { generatePlan } from '../api/plan';
 import { toApiClientError } from '../api/client';
 import styles from './PlacePage.module.css';
