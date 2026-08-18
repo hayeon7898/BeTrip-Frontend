@@ -97,3 +97,7 @@
   background: var(--color-sub-50);
   color: var(--color-text-secondary);
 }
+
+.addButton {
+  flex-shrink: 0;
+}
