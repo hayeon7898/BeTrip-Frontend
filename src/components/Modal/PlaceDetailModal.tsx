@@ -18,25 +18,25 @@ export default function PlaceDetailModal({ place, added = false, onClose, onAdd 
   const [isLoadingUrl, setIsLoadingUrl] = useState(false);
 
   useEffect(() => {
-    if (!place) {
-      setPlaceUrl(null);
-      return;
-    }
+    if (!place) return;
 
     let cancelled = false;
-    setIsLoadingUrl(true);
-    setPlaceUrl(null);
 
-    getPlaceDetail(place.id)
-      .then((detail) => {
+    const loadPlaceUrl = async () => {
+      setIsLoadingUrl(true);
+      setPlaceUrl(null);
+
+      try {
+        const detail = await getPlaceDetail(place.id);
         if (!cancelled) setPlaceUrl(detail.placeUrl);
-      })
-      .catch(() => {
+      } catch {
         if (!cancelled) setPlaceUrl(null);
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setIsLoadingUrl(false);
-      });
+      }
+    };
+
+    loadPlaceUrl();
 
     return () => {
       cancelled = true;
