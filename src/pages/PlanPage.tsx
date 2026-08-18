@@ -6,7 +6,6 @@ import DayTabs from '../components/DayTabs/DayTabs';
 import SearchBar from '../components/SearchBar/SearchBar';
 import Typography from '../components/Typography/Typography';
 import Button from '../components/Button/Button';
-import PlaceCard from '../components/PlaceCard/PlaceCard';
 import PlaceListItem from '../components/PlaceListItem/PlaceListItem';
 import PlaceDetailModal from '../components/Modal/PlaceDetailModal';
 import KakaoMap from '../components/Map/KakaoMap';
@@ -101,6 +100,7 @@ export default function PlanPage() {
   const [pendingAddSlot, setPendingAddSlot] = useState<MealSlot | null>(null);
   const [dragOverSlot, setDragOverSlot] = useState<MealSlot | null>(null);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
+  const [isResultsOpen, setIsResultsOpen] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -171,6 +171,7 @@ export default function PlanPage() {
   const handleMapSearchSubmit = async (query: string) => {
     const trimmed = query.trim();
     if (!trimmed) return;
+    setIsResultsOpen(true);
     setIsMapSearchLoading(true);
     try {
       const results = await searchPlaces(trimmed);
@@ -375,31 +376,65 @@ export default function PlanPage() {
                   }
                 />
 
-                {isMapSearchLoading && (
-                  <Typography variant="caption" color="tertiary" className={styles.pendingHint}>
-                    검색 중...
-                  </Typography>
-                )}
-
-                {mapResults.length > 0 && (
+                {isResultsOpen && (
                   <div className={styles.mapResultsPanel}>
-                    {pendingAddSlot && (
+                    <div className={styles.mapResultsHeader}>
+                      <Typography variant="caption" color="tertiary">
+                        {isMapSearchLoading ? '검색 중...' : `검색 결과 ${mapResults.length}건`}
+                      </Typography>
+                      <button
+                        type="button"
+                        className={styles.mapResultsClose}
+                        onClick={() => setIsResultsOpen(false)}
+                        aria-label="검색 결과 닫기"
+                      >
+                        ×
+                      </button>
+                    </div>
+
+                    {pendingAddSlot && !isMapSearchLoading && mapResults.length > 0 && (
                       <Typography variant="caption" color="secondary" className={styles.pendingHint}>
                         {MEAL_SLOT_LABEL[pendingAddSlot]}에 담을 장소를 골라주세요 — 드래그하거나 담기 버튼을 눌러보세요
                       </Typography>
                     )}
-                    <div className={styles.mapResultsList}>
-                      {mapResults.map((place) => (
-                        <div
-                          key={place.id}
-                          className={styles.draggableCard}
-                          draggable
-                          onDragStart={(event) => handleDragStart(event, place)}
-                        >
-                          <PlaceCard place={place} onAdd={handleResultAddClick} onClick={setSelectedPlace} />
-                        </div>
-                      ))}
-                    </div>
+
+                    {isMapSearchLoading ? (
+                      <div className={styles.mapResultsList}>
+                        {Array.from({ length: 4 }).map((_, i) => (
+                          <div key={i} className={styles.skeletonItem}>
+                            <div className={styles.skeletonThumb} />
+                            <div className={styles.skeletonLines}>
+                              <div className={styles.skeletonLine} style={{ width: '55%' }} />
+                              <div className={styles.skeletonLine} style={{ width: '35%' }} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : mapResults.length === 0 ? (
+                      <div className={styles.mapResultsEmpty}>
+                        <Typography variant="caption" color="tertiary">
+                          검색 결과가 없어요
+                        </Typography>
+                      </div>
+                    ) : (
+                      <div className={styles.mapResultsList}>
+                        {mapResults.map((place) => (
+                          <div
+                            key={place.id}
+                            className={styles.draggableCard}
+                            draggable
+                            onDragStart={(event) => handleDragStart(event, place)}
+                          >
+                            <PlaceListItem
+                              place={place}
+                              variant="comfortable"
+                              onAdd={handleResultAddClick}
+                              onClick={setSelectedPlace}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </>

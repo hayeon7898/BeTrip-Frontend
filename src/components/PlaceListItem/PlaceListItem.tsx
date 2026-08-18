@@ -1,4 +1,5 @@
 import Typography from '../Typography/Typography';
+import Button from '../Button/Button';
 import styles from './PlaceListItem.module.css';
 import type { Place } from '../../types/place';
 
@@ -10,6 +11,8 @@ interface PlaceListItemProps {
   variant?: 'compact' | 'comfortable';
   onClick?: (place: Place) => void;
   onRemove?: (place: Place) => void;
+  /** 있으면 우측에 "담기" 버튼이 표시됩니다 (검색 결과에서 빠르게 담을 때 사용). */
+  onAdd?: (place: Place) => void;
 }
 
 export default function PlaceListItem({
@@ -18,6 +21,7 @@ export default function PlaceListItem({
   variant = 'compact',
   onClick,
   onRemove,
+  onAdd,
 }: PlaceListItemProps) {
   const isComfortable = variant === 'comfortable';
 
@@ -62,6 +66,17 @@ export default function PlaceListItem({
           </Typography>
         </div>
       </button>
+
+      {onAdd && (
+        <Button
+          variant="primary"
+          size="sm"
+          className={styles.addButton}
+          onClick={() => onAdd(place)}
+        >
+          담기
+        </Button>
+      )}
 
       {onRemove && (
         <button
