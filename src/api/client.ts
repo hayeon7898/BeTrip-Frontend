@@ -94,6 +94,9 @@ interface ErrorResponseData {
 }
 
 export function toApiClientError(error: unknown): ApiClientError {
+  if (error instanceof ApiClientError) {
+    return error;
+  }
   if (axios.isAxiosError(error)) {
     const status = error.response?.status ?? 0;
     const data = error.response?.data as ErrorResponseData | undefined;

@@ -4,7 +4,7 @@ import Button from '../Button/Button';
 import styles from './PlaceDetailModal.module.css';
 import type { Place } from '../../types/place';
 import { CATEGORY_LABEL } from '../../types/place';
-import { getPlaceDetail } from '../../api/place';
+import { getPlaceDetail } from '../../api/map';
 
 interface PlaceDetailModalProps {
   place: Place | null;

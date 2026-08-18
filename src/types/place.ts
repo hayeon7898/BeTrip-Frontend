@@ -43,3 +43,28 @@ export function apiCategoryToUi(category: ApiPlaceCategory): PlaceCategory {
 export function uiCategoryToApi(category: PlaceCategory): ApiPlaceCategory {
   return UI_TO_API_CATEGORY[category];
 }
+
+// api/place.ts(itinerary_place 도메인)와 api/map.ts(지도 도메인)가 공통으로 쓰는
+// place 응답 매핑 — 두 파일 중 한쪽에 두면 다른 쪽이 그 파일 내부 구현에 의존하게
+// 되므로 공용 타입 파일에 둔다.
+export interface ApiPlaceItem {
+  place_id: string;
+  name: string;
+  category: ApiPlaceCategory;
+  address?: string | null;
+  lat: number;
+  lng: number;
+  thumbnail_url?: string | null;
+}
+
+export function mapApiPlace(item: ApiPlaceItem): Place {
+  return {
+    id: item.place_id,
+    name: item.name,
+    category: apiCategoryToUi(item.category),
+    address: item.address ?? undefined,
+    thumbnailUrl: item.thumbnail_url ?? undefined,
+    latitude: item.lat,
+    longitude: item.lng,
+  };
+}
