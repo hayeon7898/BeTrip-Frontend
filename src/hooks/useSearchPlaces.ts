@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Place } from '../types/place';
 import { searchPlaces } from '../api/map';
 import { toApiClientError } from '../api/client';
@@ -20,7 +20,11 @@ interface UseSearchPlacesResult {
 }
 
 export function useSearchPlaces(options: UseSearchPlacesOptions = {}): UseSearchPlacesResult {
-  const { onError } = options;
+  // onError는 ref로 최신값만 추적해 search/loadMore와 Observer 관련 함수의 identity를 안정화한다.
+  const onErrorRef = useRef(options.onError);
+  useEffect(() => {
+    onErrorRef.current = options.onError;
+  });
 
   const [results, setResults] = useState<Place[]>([]);
   const [hasNext, setHasNext] = useState(false);
@@ -68,13 +72,15 @@ export function useSearchPlaces(options: UseSearchPlacesOptions = {}): UseSearch
         hasNextRef.current = false;
         setResults([]);
         setHasNext(false);
-        onError?.(toApiClientError(err).message ?? '검색에 실패했어요. 잠시 후 다시 시도해주세요.');
+        onErrorRef.current?.(
+          toApiClientError(err).message ?? '검색에 실패했어요. 잠시 후 다시 시도해주세요.',
+        );
         return [];
       } finally {
         if (requestId === requestIdRef.current) setIsLoading(false);
       }
     },
-    [onError],
+    [],
   );
 
   const loadMore = useCallback(async () => {
@@ -100,12 +106,12 @@ export function useSearchPlaces(options: UseSearchPlacesOptions = {}): UseSearch
     } catch (err) {
       if (requestId !== requestIdRef.current) return;
       // 기존 결과/hasNext는 그대로 둔다 - 다음 스크롤 때 같은 페이지로 재시도됨
-      onError?.(toApiClientError(err).message ?? '추가 결과를 불러오지 못했어요.');
+      onErrorRef.current?.(toApiClientError(err).message ?? '추가 결과를 불러오지 못했어요.');
     } finally {
       isFetchingMoreRef.current = false;
       if (requestId === requestIdRef.current) setIsLoadingMore(false);
     }
-  }, [onError]);
+  }, []);
 
   const reset = useCallback(() => {
     ++requestIdRef.current;
