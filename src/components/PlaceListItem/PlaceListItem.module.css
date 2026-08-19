@@ -101,3 +101,10 @@
 .addButton {
   flex-shrink: 0;
 }
+
+.thumb,
+.thumbComfortable,
+.thumbPlaceholder {
+  -webkit-user-drag: none;
+  user-select: none;
+}
