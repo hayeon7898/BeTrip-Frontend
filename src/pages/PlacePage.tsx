@@ -13,9 +13,9 @@ import { useToast } from '../components/Toast/useToast';
 import { CATEGORY_LABEL, CATEGORY_ORDER, uiCategoryToApi } from '../types/place';
 import type { Place, PlaceCategory } from '../types/place';
 import { recommendPlaces, addPlaceToItinerary, removePlaceFromItinerary } from '../api/place';
-import { searchPlaces } from '../api/map';
 import { generatePlan } from '../api/plan';
 import { toApiClientError } from '../api/client';
+import { useSearchPlaces } from '../hooks/useSearchPlaces';
 import styles from './PlacePage.module.css';
 
 type ChatMessage =
@@ -51,11 +51,19 @@ export default function PlacePage() {
 
   // ---- 검색(지도 검색, 채팅과 완전히 별개) ----
   const [searchValue, setSearchValue] = useState('');
-  const [searchResults, setSearchResults] = useState<Place[]>([]);
-  const [isSearchLoading, setIsSearchLoading] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [lastSearchedQuery, setLastSearchedQuery] = useState<string | null>(null);
   const searchWrapperRef = useRef<HTMLDivElement>(null);
+  const {
+    results: searchResults,
+    hasNext: searchHasNext,
+    isLoading: isSearchLoading,
+    isLoadingMore: isSearchLoadingMore,
+    search: runSearch,
+    containerRef: searchContainerRef,
+    sentinelRef: searchSentinelRef,
+  } = useSearchPlaces({
+    onError: (message) => showToast({ variant: 'error', message }),
+  });
 
   // ---- 담은 장소 / 상세 모달 ----
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
@@ -149,33 +157,12 @@ export default function PlacePage() {
   };
 
   // 검색바 -> /map/search (드롭다운으로 결과 표시, 채팅과 무관)
+  // 직전과 같은 검색어 재요청 방지, 로딩/에러 처리는 useSearchPlaces 훅이 담당
   const handleSearchSubmit = async (query: string) => {
     const trimmed = query.trim();
     if (!trimmed) return;
-
-    // 직전과 같은 검색어면 재요청하지 않고 이미 있는 결과로 드롭다운만 다시 연다
-    if (trimmed === lastSearchedQuery) {
-      setIsSearchOpen(true);
-      return;
-    }
-
     setIsSearchOpen(true);
-    setIsSearchLoading(true);
-    try {
-      const results = await searchPlaces(trimmed);
-      setSearchResults(results);
-      setLastSearchedQuery(trimmed);
-    } catch (error) {
-      const apiError = toApiClientError(error);
-      setSearchResults([]);
-      setLastSearchedQuery(null);
-      showToast({
-        variant: 'error',
-        message: apiError.message ?? '검색에 실패했어요. 잠시 후 다시 시도해주세요.',
-      });
-    } finally {
-      setIsSearchLoading(false);
-    }
+    await runSearch(trimmed);
   };
 
   const handleAddPlace = async (place: Place) => {
@@ -252,7 +239,7 @@ export default function PlacePage() {
           />
 
           {isSearchOpen && (
-  <div className={styles.searchDropdown}>
+  <div className={styles.searchDropdown} ref={searchContainerRef}>
     <div className={styles.searchDropdownHeader}>
       <Typography variant="caption" color="tertiary">
         {isSearchLoading ? '검색 중...' : `검색 결과 ${searchResults.length}건`}
@@ -295,6 +282,16 @@ export default function PlacePage() {
                   onClick={setSelectedPlace}
                 />
               ))}
+              {isSearchLoadingMore && (
+                <div className={styles.skeletonItem}>
+                  <div className={styles.skeletonThumb} />
+                  <div className={styles.skeletonLines}>
+                    <div className={styles.skeletonLine} style={{ width: '55%' }} />
+                    <div className={styles.skeletonLine} style={{ width: '35%' }} />
+                  </div>
+                </div>
+              )}
+              {searchHasNext && <div ref={searchSentinelRef} aria-hidden style={{ height: 1 }} />}
             </div>
           )}
         </div>
