@@ -69,3 +69,60 @@ export async function removePlaceFromItinerary(
     throw toApiClientError(error);
   }
 }
+// ------------------------------------------------------------------
+// 장소 이동 PATCH /itineraries/{iId}/places/{placeId}
+// ------------------------------------------------------------------
+interface ItineraryPlaceMoveResponse {
+  itinerary_place_id: string;
+  place_id: string;
+  day: number;
+  time_slot: TimeSlot;
+  order_in_day: number;
+  start_time: string | null;
+  travel_time_to_next_min: number | null;
+}
+
+export interface MovePlaceDestination {
+  day: number;
+  time_slot: TimeSlot;
+}
+
+export async function movePlaceInItinerary(
+  itineraryId: string,
+  placeId: string,
+  destination: MovePlaceDestination,
+): Promise<ItineraryPlaceMoveResponse> {
+  try {
+    const response = await apiClient.patch<ItineraryPlaceMoveResponse>(
+      `/itineraries/${itineraryId}/places/${placeId}`,
+      destination,
+    );
+    return response.data;
+  } catch (error) {
+    throw toApiClientError(error);
+  }
+}
+
+// ------------------------------------------------------------------
+// 순서 재정렬 PATCH /itineraries/{iId}/places/reorder
+// ------------------------------------------------------------------
+export interface ReorderPlacesTarget {
+  day: number;
+  time_slot: TimeSlot;
+  place_ids: string[];
+}
+
+export async function reorderPlacesInItinerary(
+  itineraryId: string,
+  target: ReorderPlacesTarget,
+): Promise<ItineraryPlaceMoveResponse[]> {
+  try {
+    const response = await apiClient.patch<ItineraryPlaceMoveResponse[]>(
+      `/itineraries/${itineraryId}/places/reorder`,
+      target,
+    );
+    return response.data;
+  } catch (error) {
+    throw toApiClientError(error);
+  }
+}
