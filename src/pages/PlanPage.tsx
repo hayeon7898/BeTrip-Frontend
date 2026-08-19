@@ -23,7 +23,6 @@ import { getItineraryDetail } from '../api/itineraries';
 import type { ItineraryDetail, TimeSlot as ApiTimeSlot } from '../api/itineraries';
 import { generatePlan, savePlan } from '../api/plan';
 import { addPlaceToItinerary, removePlaceFromItinerary, movePlaceInItinerary, reorderPlacesInItinerary } from '../api/place';
-import { searchPlaces } from '../api/map';
 import { toApiClientError } from '../api/client';
 import { useSearchPlaces } from '../hooks/useSearchPlaces';
 import styles from './PlanPage.module.css';
