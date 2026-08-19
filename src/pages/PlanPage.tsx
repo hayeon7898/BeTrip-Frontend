@@ -431,7 +431,7 @@ export default function PlanPage() {
                           </div>
                         ))}
                         {isMapSearchLoadingMore &&
-                          Array.from({ length: 2 }).map((_, i) => (
+                          Array.from({ length: mapResults.length % 2 === 0 ? 2 : 1 }).map((_, i) => (
                             <div key={i} className={styles.skeletonItem}>
                               <div className={styles.skeletonThumb} />
                               <div className={styles.skeletonLines}>

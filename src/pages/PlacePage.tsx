@@ -282,16 +282,23 @@ export default function PlacePage() {
                   onClick={setSelectedPlace}
                 />
               ))}
-              {isSearchLoadingMore && (
-                <div className={styles.skeletonItem}>
-                  <div className={styles.skeletonThumb} />
-                  <div className={styles.skeletonLines}>
-                    <div className={styles.skeletonLine} style={{ width: '55%' }} />
-                    <div className={styles.skeletonLine} style={{ width: '35%' }} />
+              {isSearchLoadingMore &&
+                Array.from({ length: searchResults.length % 2 === 0 ? 2 : 1 }).map((_, i) => (
+                  <div key={i} className={styles.skeletonItem}>
+                    <div className={styles.skeletonThumb} />
+                    <div className={styles.skeletonLines}>
+                      <div className={styles.skeletonLine} style={{ width: '55%' }} />
+                      <div className={styles.skeletonLine} style={{ width: '35%' }} />
+                    </div>
                   </div>
-                </div>
+                ))}
+              {searchHasNext && (
+                <div
+                  ref={searchSentinelRef}
+                  aria-hidden
+                  style={{ gridColumn: '1 / -1', height: 1 }}
+                />
               )}
-              {searchHasNext && <div ref={searchSentinelRef} aria-hidden style={{ height: 1 }} />}
             </div>
           )}
         </div>
