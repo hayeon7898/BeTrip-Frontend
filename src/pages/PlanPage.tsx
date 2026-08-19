@@ -25,6 +25,7 @@ import { generatePlan, savePlan } from '../api/plan';
 import { addPlaceToItinerary, removePlaceFromItinerary, movePlaceInItinerary, reorderPlacesInItinerary } from '../api/place';
 import { searchPlaces } from '../api/map';
 import { toApiClientError } from '../api/client';
+import { useSearchPlaces } from '../hooks/useSearchPlaces';
 import styles from './PlanPage.module.css';
 
 
@@ -94,9 +95,18 @@ export default function PlanPage() {
   const [isMutatingSchedule, setIsMutatingSchedule] = useState(false);
 
   const [mapSearchValue, setMapSearchValue] = useState('');
-  const [mapResults, setMapResults] = useState<Place[]>([]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isMapSearchLoading, setIsMapSearchLoading] = useState(false);
+  const {
+    results: mapResults,
+    hasNext: mapHasNext,
+    isLoading: isMapSearchLoading,
+    isLoadingMore: isMapSearchLoadingMore,
+    search: runMapSearch,
+    containerRef: mapResultsContainerRef,
+    sentinelRef: mapResultsSentinelRef,
+  } = useSearchPlaces({
+    onError: (message) => showToast({ variant: 'error', message }),
+  });
   // '+ OO 일정 더 추가하기'를 눌러 어느 시간대에 담을지 지정해둔 상태 (드래그 없이도 담을 수 있는 폴백 경로)
   const [pendingAddSlot, setPendingAddSlot] = useState<MealSlot | null>(null);
   const [dragOverSlot, setDragOverSlot] = useState<MealSlot | null>(null);
@@ -175,26 +185,14 @@ export default function PlanPage() {
     if (item) setSelectedPlace(item.place);
   };
 
+  // 로딩/에러 처리, 다음 페이지 로드는 useSearchPlaces 훅이 담당
   const handleMapSearchSubmit = async (query: string) => {
     const trimmed = query.trim();
     if (!trimmed) return;
     setIsResultsOpen(true);
-    setIsMapSearchLoading(true);
-    try {
-      const results = await searchPlaces(trimmed);
-      setMapResults(results);
-      if (results.length === 0) {
-        showToast({ variant: 'warning', message: `'${trimmed}'와(과) 일치하는 장소가 없어요` });
-      }
-    } catch (error) {
-      const apiError = toApiClientError(error);
-      setMapResults([]);
-      showToast({
-        variant: 'error',
-        message: apiError.message ?? '검색에 실패했어요. 잠시 후 다시 시도해주세요',
-      });
-    } finally {
-      setIsMapSearchLoading(false);
+    const results = await runMapSearch(trimmed);
+    if (results.length === 0) {
+      showToast({ variant: 'warning', message: `'${trimmed}'와(과) 일치하는 장소가 없어요` });
     }
   };
 
@@ -545,7 +543,7 @@ export default function PlanPage() {
                         </Typography>
                       </div>
                     ) : (
-                      <div className={styles.mapResultsList}>
+                      <div className={styles.mapResultsList} ref={mapResultsContainerRef}>
                         {mapResults.map((place) => (
                           <div
                             key={place.id}
@@ -561,6 +559,23 @@ export default function PlanPage() {
                             />
                           </div>
                         ))}
+                        {isMapSearchLoadingMore &&
+                          Array.from({ length: mapResults.length % 2 === 0 ? 2 : 1 }).map((_, i) => (
+                            <div key={i} className={styles.skeletonItem}>
+                              <div className={styles.skeletonThumb} />
+                              <div className={styles.skeletonLines}>
+                                <div className={styles.skeletonLine} style={{ width: '55%' }} />
+                                <div className={styles.skeletonLine} style={{ width: '35%' }} />
+                              </div>
+                            </div>
+                          ))}
+                        {mapHasNext && (
+                          <div
+                            ref={mapResultsSentinelRef}
+                            aria-hidden
+                            style={{ gridColumn: '1 / -1', height: 1 }}
+                          />
+                        )}
                       </div>
                     )}
                   </div>

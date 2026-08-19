@@ -7,14 +7,23 @@ import { mapApiPlace } from '../types/place';
 // ------------------------------------------------------------------
 interface PlaceSearchResponse {
   places: ApiPlaceItem[];
+  has_next: boolean;
 }
 
-export async function searchPlaces(query: string): Promise<Place[]> {
+export interface PlaceSearchResult {
+  places: Place[];
+  hasNext: boolean;
+}
+
+export async function searchPlaces(query: string, page = 1): Promise<PlaceSearchResult> {
   try {
     const response = await apiClient.get<PlaceSearchResponse>('/map/search', {
-      params: { q: query },
+      params: { q: query, page },
     });
-    return response.data.places.map(mapApiPlace);
+    return {
+      places: response.data.places.map(mapApiPlace),
+      hasNext: response.data.has_next,
+    };
   } catch (error) {
     throw toApiClientError(error);
   }
