@@ -183,3 +183,18 @@
 .alertBox {
   flex: 1;
 }
+
+.placeInfoWindowDemo {
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(90deg, rgba(82, 96, 237, 0.08) 1px, transparent 1px),
+    linear-gradient(rgba(82, 96, 237, 0.08) 1px, transparent 1px),
+    var(--color-sub-50);
+  background-size: 32px 32px;
+}
