@@ -39,3 +39,14 @@
   font-weight: 700;
   box-shadow: 0 2px 6px rgba(27, 28, 43, 0.2);
 }
+
+/* 검색 결과 등 아직 일정에 안 담긴 장소용 임시 핀 — 번호 배지 없는 작은 서브컬러 핀.
+   인포윈도우가 앵커링할 위치를 표시하는 용도로도 씁니다. */
+.pinSub {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-sub-100);
+  border: 2px solid var(--color-main-500);
+  box-shadow: 0 2px 6px rgba(27, 28, 43, 0.2);
+}

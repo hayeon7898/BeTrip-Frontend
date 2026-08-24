@@ -13,7 +13,13 @@ declare global {
   }
 
   interface KakaoMapInstance {
-    setBounds(bounds: KakaoLatLngBounds): void;
+    setBounds(
+      bounds: KakaoLatLngBounds,
+      paddingTop?: number,
+      paddingRight?: number,
+      paddingBottom?: number,
+      paddingLeft?: number,
+    ): void;
     relayout(): void;
   }
 
@@ -22,10 +28,12 @@ declare global {
     content: HTMLElement | string;
     xAnchor?: number;
     yAnchor?: number;
+    zIndex?: number;
   }
 
   interface KakaoCustomOverlay {
     setMap(map: KakaoMapInstance | null): void;
+    setPosition(position: KakaoLatLng): void;
   }
 
   interface KakaoMapOptions {

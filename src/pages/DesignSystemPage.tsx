@@ -14,6 +14,7 @@ import SearchBar from '../components/SearchBar/SearchBar';
 import PlaceCard from '../components/PlaceCard/PlaceCard';
 import PlaceListItem from '../components/PlaceListItem/PlaceListItem';
 import DayTabs from '../components/DayTabs/DayTabs';
+import PlaceInfoWindow from '../components/Map/PlaceInfoWindow';
 import { useToast } from '../components/Toast/useToast';
 import type { ButtonSize, ButtonVariant } from '../components/Button/Button';
 import type { BadgeTone } from '../components/Badge/Badge';
@@ -22,6 +23,14 @@ import type { TypographyVariant } from '../components/Typography/Typography';
 import type { Place } from '../types/place';
 
 type ColorToken = { name: string; hex: string; varName: string };
+type PlaceDemo = Place & {
+  rating?: number;
+  tags?: string[];
+  priceLabel?: string;
+  menuSummary?: string[];
+  reviewSummary?: string;
+  photos?: string[];
+};
 
 const colorGroups: ColorToken[][] = [
   [
@@ -72,7 +81,7 @@ const alertSamples: { variant: AlertVariant; message: string }[] = [
 // PlaceCard / PlaceListItem 미리보기 전용 더미 데이터입니다.
 // PlacePage의 실제 mock 데이터(placeMockData.ts)와는 분리해서, 이 페이지가
 // 특정 페이지 데이터에 의존하지 않고 항상 단독으로 렌더링되도록 했어요.
-const placeDemoData: Place[] = [
+const placeDemoData: PlaceDemo[] = [
   {
     id: 'demo-restaurant',
     name: '한강뷰 와인바',
@@ -147,6 +156,7 @@ export default function DesignSystemPage() {
   const [addedDemoIds, setAddedDemoIds] = useState<string[]>([]);
   const [listDemoItems, setListDemoItems] = useState<Place[]>(placeDemoData);
   const [dayTabsDemo, setDayTabsDemo] = useState(1);
+  const [infoWindowAdded, setInfoWindowAdded] = useState(false);
   const { showToast } = useToast();
 
   return (
@@ -418,6 +428,23 @@ export default function DesignSystemPage() {
         <Button variant="primary" size="md" onClick={() => setConfirmOpen(true)}>
           모달 미리보기
         </Button>
+      </Section>
+
+      <Section
+        title="PlaceInfoWindow"
+        usage='<PlaceInfoWindow place={place} added={added} onClose={handleClose} onAdd={handleAdd} />'
+      >
+        <div className={styles.placeInfoWindowDemo}>
+          <PlaceInfoWindow
+            place={placeDemoData[0]}
+            added={infoWindowAdded}
+            onClose={() => undefined}
+            onAdd={(place) => {
+              setInfoWindowAdded(true);
+              showToast({ variant: 'info', message: `${place.name}을(를) 저녁 일정에 담았어요` });
+            }}
+          />
+        </div>
       </Section>
 
       <ConfirmModal

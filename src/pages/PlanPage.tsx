@@ -7,7 +7,7 @@ import SearchBar from '../components/SearchBar/SearchBar';
 import Typography from '../components/Typography/Typography';
 import Button from '../components/Button/Button';
 import PlaceListItem from '../components/PlaceListItem/PlaceListItem';
-import PlaceDetailModal from '../components/Modal/PlaceDetailModal';
+import PlaceInfoWindow from '../components/Map/PlaceInfoWindow';
 import KakaoMap from '../components/Map/KakaoMap';
 import type { MapMarker } from '../components/Map/KakaoMap';
 import { useToast } from '../components/Toast/useToast';
@@ -167,21 +167,42 @@ export default function PlanPage() {
   }, [daySchedule]);
 
   // 담긴 순서(index)를 지도 핀 번호로, 실제 좌표를 마커 위치로 사용합니다.
-  const mapMarkers: MapMarker[] = useMemo(
-    () =>
-      flatItems.map((item, index) => ({
-        id: item.id,
-        title: item.place.name,
-        latitude: item.place.latitude,
-        longitude: item.place.longitude,
-        label: index + 1,
-      })),
-    [flatItems],
-  );
+  const isSelectedPlaceInSchedule = selectedPlace
+    ? flatItems.some((item) => item.place.id === selectedPlace.id)
+    : false;
+
+  const mapMarkers: MapMarker[] = useMemo(() => {
+    const scheduleMarkers: MapMarker[] = flatItems.map((item, index) => ({
+      id: item.id,
+      title: item.place.name,
+      latitude: item.place.latitude,
+      longitude: item.place.longitude,
+      label: index + 1,
+    }));
+
+    if (selectedPlace && !isSelectedPlaceInSchedule) {
+      scheduleMarkers.push({
+        id: `preview-${selectedPlace.id}`,
+        title: selectedPlace.name,
+        latitude: selectedPlace.latitude,
+        longitude: selectedPlace.longitude,
+        label: 0,
+        variant: 'sub',
+      });
+    }
+
+    return scheduleMarkers;
+  }, [flatItems, selectedPlace, isSelectedPlaceInSchedule]);
 
   const handleMarkerClick = (scheduleItemIdClicked: string) => {
     const item = flatItems.find((i) => i.id === scheduleItemIdClicked);
     if (item) setSelectedPlace(item.place);
+  };
+
+  // 검색 결과 카드 클릭
+  const handleResultCardClick = (place: Place) => {
+    setSelectedPlace(place);
+    setIsResultsOpen(false);
   };
 
   // 로딩/에러 처리, 다음 페이지 로드는 useSearchPlaces 훅이 담당
@@ -478,7 +499,41 @@ export default function PlanPage() {
 
       <div className={styles.main}>
         <div className={styles.mapPanel}>
-          <KakaoMap markers={mapMarkers} onMarkerClick={handleMarkerClick} className={styles.mapArea} />
+          <KakaoMap
+            markers={mapMarkers}
+            onMarkerClick={handleMarkerClick}
+            className={styles.mapArea}
+            infoWindow={
+              selectedPlace
+                ? {
+                    latitude: selectedPlace.latitude,
+                    longitude: selectedPlace.longitude,
+                    content: (
+                      <PlaceInfoWindow
+                        place={selectedPlace}
+                        added={isSelectedPlaceInSchedule}
+                        onClose={() => {
+                          setSelectedPlace(null);
+                          if (mapResults.length > 0) setIsResultsOpen(true);
+                        }}
+                        onAdd={(place) => {
+                          if (!pendingAddSlot) {
+                            showToast({
+                              variant: 'warning',
+                              message: '먼저 담을 시간대의 "+ 일정 더 추가하기"를 눌러주세요',
+                            });
+                            return;
+                          }
+                          void addPlaceToSlot(place, pendingAddSlot);
+                          setSelectedPlace(null);
+                          if (mapResults.length > 0) setIsResultsOpen(true);
+                        }}
+                      />
+                    ),
+                  }
+                : null
+            }
+          />
 
           <div className={styles.mapSearchOverlay}>
             {isSearchOpen ? (
@@ -554,7 +609,7 @@ export default function PlanPage() {
                               place={place}
                               variant="comfortable"
                               onAdd={handleResultAddClick}
-                              onClick={setSelectedPlace}
+                              onClick={handleResultCardClick}
                             />
                           </div>
                         ))}
@@ -665,19 +720,6 @@ export default function PlanPage() {
           })}
         </div>
       </div>
-
-      <PlaceDetailModal
-        place={selectedPlace}
-        onClose={() => setSelectedPlace(null)}
-        onAdd={(place) => {
-          if (!pendingAddSlot) {
-            showToast({ variant: 'warning', message: '먼저 담을 시간대의 "+ 일정 더 추가하기"를 눌러주세요' });
-            return;
-          }
-          void addPlaceToSlot(place, pendingAddSlot);
-          setSelectedPlace(null);
-        }}
-      />
     </div>
   );
 }
