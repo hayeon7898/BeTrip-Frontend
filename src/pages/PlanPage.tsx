@@ -22,10 +22,11 @@ import type { MealSlot, DaySchedule, ScheduleItem } from '../types/plan';
 import { getItineraryDetail } from '../api/itineraries';
 import type { ItineraryDetail, TimeSlot as ApiTimeSlot } from '../api/itineraries';
 import { generatePlan, savePlan } from '../api/plan';
-import { addPlaceToItinerary, removePlaceFromItinerary } from '../api/place';
+import { addPlaceToItinerary, removePlaceFromItinerary, movePlaceInItinerary, reorderPlacesInItinerary } from '../api/place';
 import { toApiClientError } from '../api/client';
 import { useSearchPlaces } from '../hooks/useSearchPlaces';
 import styles from './PlanPage.module.css';
+
 
 const API_TO_MEAL_SLOT: Record<ApiTimeSlot, MealSlot> = {
   MORNING: 'morning',
@@ -108,6 +109,12 @@ export default function PlanPage() {
   // '+ OO 일정 더 추가하기'를 눌러 어느 시간대에 담을지 지정해둔 상태 (드래그 없이도 담을 수 있는 폴백 경로)
   const [pendingAddSlot, setPendingAddSlot] = useState<MealSlot | null>(null);
   const [dragOverSlot, setDragOverSlot] = useState<MealSlot | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [draggedItem, setDraggedItem] = useState<{
+    itineraryPlaceId: string;
+    placeId: string;
+    fromSlot: MealSlot;
+  } | null>(null);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [isResultsOpen, setIsResultsOpen] = useState(false);
 
@@ -315,13 +322,21 @@ export default function PlanPage() {
 
   const handleDragOverSlot = (event: DragEvent<HTMLDivElement>, slot: MealSlot) => {
     event.preventDefault();
-    event.dataTransfer.dropEffect = 'copy';
+    event.dataTransfer.dropEffect = draggedItem ? 'move' : 'copy';
     setDragOverSlot(slot);
   };
 
   const handleDropOnSlot = (event: DragEvent<HTMLDivElement>, slot: MealSlot) => {
     event.preventDefault();
     setDragOverSlot(null);
+    setDragOverIndex(null);
+
+    if (draggedItem) {
+      void handleReorderDrop(slot, daySchedule[slot].length);
+      setDraggedItem(null);
+      return;
+    }
+
     const raw = event.dataTransfer.getData('application/json');
     if (!raw) return;
     try {
@@ -330,6 +345,119 @@ export default function PlanPage() {
     } catch {
       // 드래그 데이터가 손상된 경우 무시합니다.
     }
+  };
+
+  const handleItemDragStart = (event: DragEvent<HTMLDivElement>, item: ScheduleItem, slot: MealSlot) => {
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', item.id); // 드롭 이벤트가 정상 발생하도록 필수
+    setDraggedItem({ itineraryPlaceId: item.id, placeId: item.place.id, fromSlot: slot });
+  };
+
+  const handleItemDragEnd = () => {
+    setDraggedItem(null);
+    setDragOverSlot(null);
+    setDragOverIndex(null);
+  };
+
+  const handleItemDragEnter = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  const handleItemDragOver = (event: DragEvent<HTMLDivElement>, slot: MealSlot, index: number) => {
+    event.preventDefault();
+    event.stopPropagation(); // 부모(slotDropZone)의 dragover가 dropEffect를 덮어쓰지 못하게 막음
+    event.dataTransfer.dropEffect = draggedItem ? 'move' : 'copy';
+    setDragOverSlot(slot);
+    setDragOverIndex(index);
+  };
+
+  // 같은 슬롯 내 순서 변경 또는 다른 슬롯으로 이동 + 위치 지정
+  const handleReorderDrop = async (toSlot: MealSlot, toIndex: number) => {
+    if (!draggedItem || !id) return;
+    if (isMutatingSchedule) {
+      showToast({ variant: 'warning', message: '처리 중이에요. 잠시만 기다려주세요' });
+      return;
+    }
+
+    const { placeId, fromSlot, itineraryPlaceId } = draggedItem;
+    const day = activeDay;
+    const snapshot = schedules; // 실패 시 되돌릴 스냅샷
+
+    const currentDaySchedule = schedules[day] ?? createEmptyDaySchedule();
+    const draggedFullItem = currentDaySchedule[fromSlot].find((i) => i.id === itineraryPlaceId);
+    if (!draggedFullItem) return;
+
+    let newOrder: string[];
+    let optimisticDaySchedule: DaySchedule;
+
+    if (fromSlot === toSlot) {
+      const items = [...currentDaySchedule[fromSlot]];
+      const fromIndex = items.findIndex((i) => i.id === itineraryPlaceId);
+      items.splice(fromIndex, 1);
+      let insertIndex = fromIndex < toIndex ? toIndex - 1 : toIndex;
+      insertIndex = Math.max(0, Math.min(insertIndex, items.length));
+      items.splice(insertIndex, 0, draggedFullItem);
+      newOrder = items.map((i) => i.place.id);
+      optimisticDaySchedule = { ...currentDaySchedule, [fromSlot]: items };
+    } else {
+      const fromItems = currentDaySchedule[fromSlot].filter((i) => i.id !== itineraryPlaceId);
+      const toItems = [...currentDaySchedule[toSlot]];
+      const insertIndex = Math.max(0, Math.min(toIndex, toItems.length));
+      toItems.splice(insertIndex, 0, draggedFullItem);
+      newOrder = toItems.map((i) => i.place.id);
+      optimisticDaySchedule = { ...currentDaySchedule, [fromSlot]: fromItems, [toSlot]: toItems };
+    }
+
+    // 낙관적 업데이트: API 응답 기다리지 않고 화면부터 즉시 갱신
+    setSchedules((prev) => ({ ...prev, [day]: optimisticDaySchedule }));
+    setIsMutatingSchedule(true);
+
+    try {
+      try {
+        if (fromSlot !== toSlot) {
+          await movePlaceInItinerary(id, placeId, { day, time_slot: MEAL_SLOT_TO_API[toSlot] });
+        }
+        await reorderPlacesInItinerary(id, {
+          day,
+          time_slot: MEAL_SLOT_TO_API[toSlot],
+          place_ids: newOrder,
+        });
+      } catch (error) {
+        setSchedules(snapshot); // 실패하면 원래 상태로 롤백
+        const apiError = toApiClientError(error);
+        showToast({
+          variant: 'error',
+          message: apiError.message ?? '순서를 변경하지 못했어요. 잠시 후 다시 시도해주세요',
+        });
+        return;
+      }
+
+      try {
+        await refreshSchedules(day); // 서버가 재계산한 시간/이동시간으로 최종 동기화
+      } catch {
+        showToast({ variant: 'warning', message: '최신 일정을 불러오지 못했어요. 새로고침해주세요' });
+      }
+    } finally {
+      setIsMutatingSchedule(false);
+    }
+  };
+
+  const handleItemDrop = (event: DragEvent<HTMLDivElement>, slot: MealSlot, index: number) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    console.log('3. drop', slot, index, 'draggedItem:', draggedItem);
+
+    if (draggedItem) {
+      void handleReorderDrop(slot, index);
+    } else {
+      // 검색 결과(새 장소)를 기존 아이템 위에 놓은 경우 — 기존 슬롯 담기 로직 그대로 위임
+      handleDropOnSlot(event, slot);
+    }
+    setDraggedItem(null);
+    setDragOverSlot(null);
+    setDragOverIndex(null);
   };
 
   const handleSavePlan = async () => {
@@ -554,12 +682,28 @@ export default function PlanPage() {
                           🚗 이동 {items[index - 1].travelToNextMin}분
                         </div>
                       )}
-                      <PlaceListItem
-                        place={item.place}
-                        time={item.time}
-                        onClick={setSelectedPlace}
-                        onRemove={() => void removeScheduleItem(item.id)}
-                      />
+                      <div
+                        className={[
+                          styles.scheduleItemWrapper,
+                          dragOverSlot === slot && dragOverIndex === index ? styles.dragOverItem : '',
+                          draggedItem?.itineraryPlaceId === item.id ? styles.draggingItem : '',
+                        ]
+                          .filter(Boolean)
+                          .join(' ')}
+                        draggable={!isMutatingSchedule}
+                        onDragStart={(event) => handleItemDragStart(event, item, slot)}
+                        onDragEnd={handleItemDragEnd}
+                        onDragEnter={handleItemDragEnter}
+                        onDragOver={(event) => handleItemDragOver(event, slot, index)}
+                        onDrop={(event) => handleItemDrop(event, slot, index)}
+                      >
+                        <PlaceListItem
+                          place={item.place}
+                          time={item.time}
+                          onClick={setSelectedPlace}
+                          onRemove={() => void removeScheduleItem(item.id)}
+                        />
+                      </div>
                     </div>
                   ))}
 

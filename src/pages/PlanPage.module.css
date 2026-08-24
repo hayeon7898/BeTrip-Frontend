@@ -292,3 +292,23 @@
     min-height: 360px;
   }
 }
+
+.scheduleItemWrapper {
+  cursor: grab;
+  border-radius: var(--radius-lg, 12px);
+  border-top: 2px solid transparent;
+  transition: border-color 0.1s ease, opacity 0.1s ease;
+  -webkit-user-drag: element;
+}
+
+.scheduleItemWrapper:active {
+  cursor: grabbing;
+}
+
+.draggingItem {
+  opacity: 0.4;
+}
+
+.dragOverItem {
+  border-top-color: var(--color-main-500);
+}
