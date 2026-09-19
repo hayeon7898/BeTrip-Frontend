@@ -106,10 +106,6 @@ export default function CreatePlanPage() {
   const isSameDayTimeInvalid =
     nights === 0 && arrivalIndex !== -1 && departureIndex !== -1 && departureIndex <= arrivalIndex;
 
-  const isRequiredMissing = !startDate || !endDate || !region || !arrivalTime || !departureTime;
-  const isSubmitDisabled =
-    isRequiredMissing || isStartInPast || isDateRangeInvalid || isMaxDurationExceeded;
-
   const toggleStyle = (value: string) =>
     setTravelStyles((prev) =>
       prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value],
@@ -134,6 +130,26 @@ export default function CreatePlanPage() {
   };
 
   const handleCreatePlan = async () => {
+    if (!startDate || !endDate) {
+      showToast({ variant: 'error', message: '여행 기간을 선택해주세요' });
+      return;
+    }
+    if (dateErrorMessage) {
+      showToast({ variant: 'error', message: dateErrorMessage });
+      return;
+    }
+    if (!region) {
+      showToast({ variant: 'error', message: '여행 지역을 선택해주세요' });
+      return;
+    }
+    if (!arrivalTime) {
+      showToast({ variant: 'error', message: '도착 시간을 선택해주세요' });
+      return;
+    }
+    if (!departureTime) {
+      showToast({ variant: 'error', message: '출발 시간을 선택해주세요' });
+      return;
+    }
     if (isSameDayTimeInvalid) {
       showToast({ variant: 'error', message: '당일치기는 출발 시간이 도착 시간보다 늦어야 해요' });
       return;
@@ -311,7 +327,6 @@ export default function CreatePlanPage() {
           variant="primary"
           size="lg"
           className={styles.submitButton}
-          disabled={isSubmitDisabled}
           onClick={handleCreatePlan}
         >
           일정 만들기
