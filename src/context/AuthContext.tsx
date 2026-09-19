@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { AuthContext } from './AuthContextObject';
-import { refresh as refreshApi } from '../api/auth';
+import { refresh as refreshApi, logout as logoutApi } from '../api/auth';
 import { ApiClientError } from '../api/client';
 import {
   getAccessToken,
@@ -31,7 +31,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = (token: string) => setStoredAccessToken(token);
-  const logout = () => setStoredAccessToken(null);
+  const logout = async () => {
+    await logoutApi();
+    setStoredAccessToken(null);
+  };
 
   return (
     <AuthContext.Provider
