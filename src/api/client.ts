@@ -25,14 +25,16 @@ interface RetryableConfig extends InternalAxiosRequestConfig {
 // 동시에 여러 요청이 401을 맞아도 refresh는 한 번만 실행되도록 공유
 let refreshPromise: Promise<string> | null = null;
 
-async function refreshAccessToken(): Promise<string> {
-  // apiClient를 그대로 쓰면 이 요청도 인터셉터를 타서 무한루프 위험이 있어 별도 호출
-  const response = await axios.post<{ access_token: string }>(
-    `${BASE_URL}/auth/refresh`,
-    null,
-    { withCredentials: true },
-  );
-  return response.data.access_token;
+export function refreshAccessToken(): Promise<string> {
+  refreshPromise ??= axios
+    .post<{ access_token: string }>(`${BASE_URL}/auth/refresh`, null, {
+      withCredentials: true,
+    })
+    .then((r) => r.data.access_token)
+    .finally(() => {
+      refreshPromise = null;
+    });
+  return refreshPromise;
 }
 
 apiClient.interceptors.response.use(
@@ -53,19 +55,16 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        if (!refreshPromise) {
-          refreshPromise = refreshAccessToken().finally(() => {
-            refreshPromise = null;
-          });
-        }
-        const newToken = await refreshPromise;
+        const newToken = await refreshAccessToken();
         setAccessToken(newToken);
-
         originalRequest.headers = originalRequest.headers ?? {};
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return apiClient(originalRequest);
       } catch (refreshError) {
-        setAccessToken(null); // refresh도 실패하면 로그아웃 상태로
+        // 진짜 인증 실패(401)일 때만 로그아웃. 네트워크/500 오류로는 로그아웃하지 않음
+        if (axios.isAxiosError(refreshError) && refreshError.response?.status === 401) {
+          setAccessToken(null);
+        }
         return Promise.reject(refreshError);
       }
     }
