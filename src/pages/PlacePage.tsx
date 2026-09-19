@@ -27,16 +27,6 @@ type ChatMessage =
 let messageId = 0;
 const nextId = () => `msg-${++messageId}`;
 
-// 채팅 텍스트에서 카테고리를 추정한다. recommend API가 키워드 검색은
-// 지원하지 않고 region/category 필터만 지원하기 때문에, 자유 텍스트를
-// 그대로 보내는 대신 카테고리로 변환해서 넘긴다.
-function detectCategory(text: string): PlaceCategory | undefined {
-  if (/카페|커피|디저트/.test(text)) return 'cafe';
-  if (/액티비티|체험|산책|투어/.test(text)) return 'activity';
-  if (/식당|맛집|저녁|점심|다이닝/.test(text)) return 'restaurant';
-  return undefined;
-}
-
 export default function PlacePage() {
   const { showToast } = useToast();
   const navigate = useNavigate();
