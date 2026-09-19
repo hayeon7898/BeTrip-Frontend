@@ -1,4 +1,4 @@
-import type { MouseEvent } from 'react';
+import { useState, type MouseEvent } from 'react';
 import Typography from '../Typography/Typography';
 import Button from '../Button/Button';
 import styles from './PlaceCard.module.css';
@@ -6,15 +6,18 @@ import type { Place } from '../../types/place';
 
 interface PlaceCardProps {
   place: Place;
-  /** 이미 내 카테고리 리스트에 담긴 상태인지 */
   added?: boolean;
-  /** '담기 +' 버튼 클릭 */
   onAdd?: (place: Place) => void;
-  /** 카드(썸네일/이름) 클릭 → 상세정보 열기 */
   onClick?: (place: Place) => void;
 }
 
+function normalizeImageUrl(url: string): string {
+  return url.startsWith('//') ? `https:${url}` : url;
+}
+
 export default function PlaceCard({ place, added = false, onAdd, onClick }: PlaceCardProps) {
+  const [imgError, setImgError] = useState(false);
+
   const handleAddClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     onAdd?.(place);
@@ -28,8 +31,13 @@ export default function PlaceCard({ place, added = false, onAdd, onClick }: Plac
         onClick={() => onClick?.(place)}
         aria-label={`${place.name} 상세정보 보기`}
       >
-        {place.thumbnailUrl ? (
-          <img src={place.thumbnailUrl} alt={place.name} className={styles.thumbnail} />
+        {place.thumbnailUrl && !imgError ? (
+          <img
+            src={normalizeImageUrl(place.thumbnailUrl)}
+            alt={place.name}
+            className={styles.thumbnail}
+            onError={() => setImgError(true)}
+          />
         ) : (
           <div className={styles.thumbnailPlaceholder}>
             <Typography variant="caption" color="tertiary">
