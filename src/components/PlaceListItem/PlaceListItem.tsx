@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import Typography from '../Typography/Typography';
 import Button from '../Button/Button';
 import styles from './PlaceListItem.module.css';
@@ -5,14 +6,15 @@ import type { Place } from '../../types/place';
 
 interface PlaceListItemProps {
   place: Place;
-  /** 일정 화면(PlanPage)처럼 시간이 있는 리스트에서 사용. 없으면 시간 라벨을 표시하지 않습니다. */
   time?: string;
-  /** compact(기본): 담은 장소 목록/일정용, 촘촘한 스타일. comfortable: 검색 결과처럼 사진 크게, 여유있게. */
   variant?: 'compact' | 'comfortable';
   onClick?: (place: Place) => void;
   onRemove?: (place: Place) => void;
-  /** 있으면 우측에 "담기" 버튼이 표시됩니다 (검색 결과에서 빠르게 담을 때 사용). */
   onAdd?: (place: Place) => void;
+}
+
+function normalizeImageUrl(url: string): string {
+  return url.startsWith('//') ? `https:${url}` : url;
 }
 
 export default function PlaceListItem({
@@ -24,6 +26,7 @@ export default function PlaceListItem({
   onAdd,
 }: PlaceListItemProps) {
   const isComfortable = variant === 'comfortable';
+  const [imgError, setImgError] = useState(false);
 
   return (
     <div className={[styles.item, isComfortable && styles.itemComfortable].filter(Boolean).join(' ')}>
@@ -38,13 +41,14 @@ export default function PlaceListItem({
         onClick={() => onClick?.(place)}
         aria-label={`${place.name} 상세정보 보기`}
       >
-        {place.thumbnailUrl ? (
+        {place.thumbnailUrl && !imgError ? (
           <img
-            src={place.thumbnailUrl}
+            src={normalizeImageUrl(place.thumbnailUrl)}
             alt={place.name}
             className={[styles.thumb, isComfortable && styles.thumbComfortable]
               .filter(Boolean)
               .join(' ')}
+            onError={() => setImgError(true)}
           />
         ) : (
           <div
