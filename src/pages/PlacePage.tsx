@@ -10,13 +10,15 @@ import PlaceCard from '../components/PlaceCard/PlaceCard';
 import PlaceListItem from '../components/PlaceListItem/PlaceListItem';
 import PlaceDetailModal from '../components/Modal/PlaceDetailModal';
 import { useToast } from '../components/Toast/useToast';
-import { CATEGORY_LABEL, CATEGORY_ORDER, uiCategoryToApi } from '../types/place';
+import { CATEGORY_LABEL, CATEGORY_ORDER } from '../types/place';
 import type { Place, PlaceCategory } from '../types/place';
-import { recommendPlaces, addPlaceToItinerary, removePlaceFromItinerary } from '../api/place';
+import { addPlaceToItinerary, removePlaceFromItinerary } from '../api/place';
 import { generatePlan } from '../api/plan';
 import { toApiClientError } from '../api/client';
 import { useSearchPlaces } from '../hooks/useSearchPlaces';
 import styles from './PlacePage.module.css';
+import { sendChatMessage } from '../api/chat';
+import ReactMarkdown from 'react-markdown';
 
 type ChatMessage =
   | { id: string; role: 'ai' | 'user'; kind: 'text'; text: string }
@@ -123,27 +125,16 @@ export default function PlacePage() {
     pushMessage({ id: nextId(), role: 'user', kind: 'text', text });
     setChatValue('');
 
-    const category = detectCategory(text);
     setIsTyping(true);
     try {
-      const places = await recommendPlaces(
-        itineraryId,
-        category ? uiCategoryToApi(category) : undefined,
-      );
+      const { reply, places } = await sendChatMessage(itineraryId, text);
       setIsTyping(false);
 
-      if (places.length === 0) {
-        pushMessage({
-          id: nextId(),
-          role: 'ai',
-          kind: 'text',
-          text: '조건에 맞는 장소를 찾지 못했어요. 다른 조건으로 찾아드릴까요?',
-        });
-        return;
-      }
+      pushMessage({ id: nextId(), role: 'ai', kind: 'text', text: reply });
 
-      pushMessage({ id: nextId(), role: 'ai', kind: 'text', text: '이런 곳은 어때요?' });
-      pushMessage({ id: nextId(), role: 'ai', kind: 'places', places: places.slice(0, 6) });
+      if (places.length > 0) {
+        pushMessage({ id: nextId(), role: 'ai', kind: 'places', places });
+      }
     } catch (error) {
       setIsTyping(false);
       const apiError = toApiClientError(error);
@@ -151,7 +142,7 @@ export default function PlacePage() {
         id: nextId(),
         role: 'ai',
         kind: 'text',
-        text: apiError.message ?? '장소를 불러오지 못했어요. 잠시 후 다시 시도해주세요.',
+        text: apiError.message ?? '메시지를 처리하지 못했어요. 잠시 후 다시 시도해주세요.',
       });
     }
   };
@@ -334,15 +325,24 @@ export default function PlacePage() {
               return (
                 <div
                   key={message.id}
-                  className={
-                    message.role === 'ai' ? styles.aiBubbleRow : styles.userBubbleRow
-                  }
+                  className={message.role === 'ai' ? styles.aiBubbleRow : styles.userBubbleRow}
                 >
                   <Typography
                     variant="body"
+                    as={message.role === 'ai' ? 'div' : undefined}
                     className={message.role === 'ai' ? styles.aiBubble : styles.userBubble}
                   >
-                    {message.text}
+                    {message.role === 'ai' ? (
+                      <ReactMarkdown
+                        components={{
+                          p: ({ children }) => <p style={{ margin: '4px 0' }}>{children}</p>,
+                        }}
+                      >
+                        {message.text}
+                      </ReactMarkdown>
+                    ) : (
+                      message.text
+                    )}
                   </Typography>
                 </div>
               );
