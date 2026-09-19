@@ -9,6 +9,7 @@ import { useToast } from '../components/Toast/useToast';
 import { getItineraries, deleteItinerary } from '../api/itineraries';
 import type { ItinerarySummary } from '../api/itineraries';
 import { formatDateRange, formatDday, getTodayKST } from '../utils/date';
+import { getTripCoverImage } from '../utils/tripCover';
 import styles from './MyPage.module.css';
 
 export default function MyPage() {
@@ -46,21 +47,26 @@ export default function MyPage() {
     }
   };
 
-  const renderPlanCard = (plan: ItinerarySummary, isPast: boolean) => (
-    <Card
-      key={plan.itinerary_id}
-      className={[styles.card, isPast ? styles.pastCard : ''].filter(Boolean).join(' ')}
-      title={plan.title ?? `${plan.region} 여행`}
-      subtitle={`${plan.region} · ${formatDateRange(plan.start_date, plan.end_date)}`}
-      onClick={() =>
-        navigate(
-          plan.status === 'DRAFT' ? `/place?iId=${plan.itinerary_id}` : `/plan/${plan.itinerary_id}`,
-        )
-      }
-      badge={!isPast ? formatDday(plan.start_date, today) : undefined}
-      onDelete={() => setDeleteTarget(plan)}
-    />
-  );
+  const renderPlanCard = (plan: ItinerarySummary, isPast: boolean) => {
+    const coverImage = getTripCoverImage(plan.region, plan.itinerary_id);
+
+    return (
+      <Card
+        key={plan.itinerary_id}
+        className={[styles.card, isPast ? styles.pastCard : ''].filter(Boolean).join(' ')}
+        thumbnail={coverImage && <img src={coverImage} alt={`${plan.region} 여행 사진`} />}
+        title={plan.title ?? `${plan.region} 여행`}
+        subtitle={`${plan.region} · ${formatDateRange(plan.start_date, plan.end_date)}`}
+        onClick={() =>
+          navigate(
+            plan.status === 'DRAFT' ? `/place?iId=${plan.itinerary_id}` : `/plan/${plan.itinerary_id}`,
+          )
+        }
+        badge={!isPast ? formatDday(plan.start_date, today) : undefined}
+        onDelete={() => setDeleteTarget(plan)}
+      />
+    );
+  };
 
   return (
     <div className={styles.page}>
