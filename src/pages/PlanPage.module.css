@@ -312,3 +312,13 @@
 .dragOverItem {
   border-top-color: var(--color-main-500);
 }
+
+.aiBubble p {
+  margin: 4px 0;
+}
+.aiBubble p:first-child {
+  margin-top: 0;
+}
+.aiBubble p:last-child {
+  margin-bottom: 0;
+}
