@@ -11,21 +11,9 @@ interface DevRouteGroup {
 }
 
 const groups: DevRouteGroup[] = [
-  {
-    label: '홈페이지',
-    items: [
-      { sub: '로그인 전', path: '/home' },
-      { sub: '로그인 후', path: '/home?loggedIn=true' },
-    ],
-  },
+  { label: '홈페이지', items: [{ path: '/home' }] },
   { label: '로그인', items: [{ path: '/login' }] },
-  {
-    label: '내 일정 보기',
-    items: [
-      { sub: '일정 있음', path: '/my' },
-      { sub: '일정 없음', path: '/my?hasPlans=false' },
-    ],
-  },
+  { label: '내 일정 보기', items: [{ path: '/my' }] },
   { label: '일정 만들기', items: [{ path: '/plan/create' }] },
   { label: '장소', items: [{ path: '/place' }] },
   { label: '일정', items: [{ path: '/plan/1' }] }, // 상세는 id 필요해서 임시값

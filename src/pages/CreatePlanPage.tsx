@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header/Header';
 import Typography from '../components/Typography/Typography';
@@ -55,6 +55,30 @@ const styleOptions: Option[] = [
   { label: '🍽️ 맛집', value: 'FOOD' },
 ];
 
+// 새로고침/뒤로가기로 컴포넌트가 다시 마운트돼도 입력값이 유실되지 않도록
+// sessionStorage에 임시 저장한다. 제출 성공 시에만 지운다.
+const DRAFT_KEY = 'createPlanDraft';
+
+interface DraftState {
+  startDate: string;
+  endDate: string;
+  region: string | null;
+  arrivalTime: string | null;
+  departureTime: string | null;
+  transport: string | null;
+  purpose: string | null;
+  travelStyles: string[];
+}
+
+function loadDraft(): DraftState | null {
+  try {
+    const raw = sessionStorage.getItem(DRAFT_KEY);
+    return raw ? (JSON.parse(raw) as DraftState) : null;
+  } catch {
+    return null;
+  }
+}
+
 function getNights(startDate: string, endDate: string): number | null {
   if (!startDate || !endDate) return null;
   return getDayDiff(startDate, endDate);
@@ -73,14 +97,29 @@ export default function CreatePlanPage() {
   const navigate = useNavigate();
   const { showToast } = useToast();
 
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [region, setRegion] = useState<string | null>(null);
-  const [arrivalTime, setArrivalTime] = useState<string | null>(null);
-  const [departureTime, setDepartureTime] = useState<string | null>(null);
-  const [transport, setTransport] = useState<string | null>(null);
-  const [purpose, setPurpose] = useState<string | null>(null);
-  const [travelStyles, setTravelStyles] = useState<string[]>([]);
+  const draft = loadDraft();
+  const [startDate, setStartDate] = useState(draft?.startDate ?? '');
+  const [endDate, setEndDate] = useState(draft?.endDate ?? '');
+  const [region, setRegion] = useState<string | null>(draft?.region ?? null);
+  const [arrivalTime, setArrivalTime] = useState<string | null>(draft?.arrivalTime ?? null);
+  const [departureTime, setDepartureTime] = useState<string | null>(draft?.departureTime ?? null);
+  const [transport, setTransport] = useState<string | null>(draft?.transport ?? null);
+  const [purpose, setPurpose] = useState<string | null>(draft?.purpose ?? null);
+  const [travelStyles, setTravelStyles] = useState<string[]>(draft?.travelStyles ?? []);
+
+  useEffect(() => {
+    const next: DraftState = {
+      startDate,
+      endDate,
+      region,
+      arrivalTime,
+      departureTime,
+      transport,
+      purpose,
+      travelStyles,
+    };
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(next));
+  }, [startDate, endDate, region, arrivalTime, departureTime, transport, purpose, travelStyles]);
 
   const today = getTodayKST();
   const nights = getNights(startDate, endDate);
@@ -106,10 +145,6 @@ export default function CreatePlanPage() {
   const isSameDayTimeInvalid =
     nights === 0 && arrivalIndex !== -1 && departureIndex !== -1 && departureIndex <= arrivalIndex;
 
-  const isRequiredMissing = !startDate || !endDate || !region || !arrivalTime || !departureTime;
-  const isSubmitDisabled =
-    isRequiredMissing || isStartInPast || isDateRangeInvalid || isMaxDurationExceeded;
-
   const toggleStyle = (value: string) =>
     setTravelStyles((prev) =>
       prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value],
@@ -134,6 +169,26 @@ export default function CreatePlanPage() {
   };
 
   const handleCreatePlan = async () => {
+    if (!startDate || !endDate) {
+      showToast({ variant: 'error', message: '여행 기간을 선택해주세요' });
+      return;
+    }
+    if (dateErrorMessage) {
+      showToast({ variant: 'error', message: dateErrorMessage });
+      return;
+    }
+    if (!region) {
+      showToast({ variant: 'error', message: '여행 지역을 선택해주세요' });
+      return;
+    }
+    if (!arrivalTime) {
+      showToast({ variant: 'error', message: '도착 시간을 선택해주세요' });
+      return;
+    }
+    if (!departureTime) {
+      showToast({ variant: 'error', message: '출발 시간을 선택해주세요' });
+      return;
+    }
     if (isSameDayTimeInvalid) {
       showToast({ variant: 'error', message: '당일치기는 출발 시간이 도착 시간보다 늦어야 해요' });
       return;
@@ -151,6 +206,7 @@ export default function CreatePlanPage() {
         purpose: (purpose as Purpose) ?? undefined,
         styles: travelStyles as TravelStyle[],
       });
+      sessionStorage.removeItem(DRAFT_KEY);
       navigate(`/place?iId=${itinerary_id}`);
     } catch (error) {
       const message =
@@ -311,7 +367,6 @@ export default function CreatePlanPage() {
           variant="primary"
           size="lg"
           className={styles.submitButton}
-          disabled={isSubmitDisabled}
           onClick={handleCreatePlan}
         >
           일정 만들기
