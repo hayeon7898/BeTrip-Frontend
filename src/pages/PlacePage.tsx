@@ -10,11 +10,13 @@ import PlaceCard from '../components/PlaceCard/PlaceCard';
 import PlaceListItem from '../components/PlaceListItem/PlaceListItem';
 import PlaceDetailModal from '../components/Modal/PlaceDetailModal';
 import { useToast } from '../components/Toast/useToast';
-import { CATEGORY_LABEL, CATEGORY_ORDER } from '../types/place';
-import type { Place, PlaceCategory } from '../types/place';
+import { CATEGORY_LABEL, CATEGORY_ORDER, mapApiPlace} from '../types/place';
+import type { Place, PlaceCategory} from '../types/place';
 import { addPlaceToItinerary, removePlaceFromItinerary } from '../api/place';
 import { generatePlan } from '../api/plan';
 import { toApiClientError } from '../api/client';
+import { getItineraryDetail } from '../api/itineraries';
+import type { ItineraryPlaceDetail } from '../api/itineraries';
 import { useSearchPlaces } from '../hooks/useSearchPlaces';
 import styles from './PlacePage.module.css';
 import { sendChatMessage } from '../api/chat';
@@ -26,6 +28,19 @@ type ChatMessage =
 
 let messageId = 0;
 const nextId = () => `msg-${++messageId}`;
+
+// 상세조회 응답의 장소를 화면에서 쓰는 Place로 변환
+function toPlace(p: ItineraryPlaceDetail): Place {
+  return mapApiPlace({
+    place_id: p.place_id,
+    name: p.name,
+    category: p.category,
+    address: p.address,
+    thumbnail_url: p.thumbnail_url,
+    lat: p.lat,
+    lng: p.lng,
+  } as Parameters<typeof mapApiPlace>[0]);
+}
 
 export default function PlacePage() {
   const { showToast } = useToast();
@@ -61,31 +76,42 @@ export default function PlacePage() {
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [savedPlaces, setSavedPlaces] = useState<Place[]>([]);
   // place_id -> itinerary_place_id. 제거(DELETE) 시 itinerary_place_id가 필요해서 따로 기억해둔다.
-  // NOTE: 현재 백엔드에 "이미 담긴 장소 목록" GET이 없어서 새로고침하면 초기화됨 - 추후 보완 필요.
   const [itineraryPlaceIds, setItineraryPlaceIds] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    if (!itineraryId) {
-      showToast({
-        variant: 'error',
-        message: '일정 정보를 찾을 수 없어요. 처음부터 다시 시도해주세요.',
-      });
-    }
-  }, [itineraryId, showToast]);
-
-  // 검색 드롭다운 바깥 클릭 시 닫기
   // useEffect(() => {
-  //   if (!isSearchOpen) return;
+  //   if (!itineraryId) {
+  //     showToast({
+  //       variant: 'error',
+  //       message: '일정 정보를 찾을 수 없어요. 처음부터 다시 시도해주세요.',
+  //     });
+  //   }
+  // }, [itineraryId, showToast]);
 
-  //   const handleOutsideClick = (event: MouseEvent) => {
-  //     if (!searchWrapperRef.current?.contains(event.target as Node)) {
-  //       setIsSearchOpen(false);
-  //     }
-  //   };
+  // 새로고침/재진입 시 서버에 저장된 담은 장소를 복원
+  useEffect(() => {
+    if (!itineraryId) return;
+    let cancelled = false;
 
-  //   document.addEventListener('mousedown', handleOutsideClick);
-  //   return () => document.removeEventListener('mousedown', handleOutsideClick);
-  // }, [isSearchOpen]);
+    getItineraryDetail(itineraryId)
+      .then((detail) => {
+        if (cancelled) return;
+        setSavedPlaces(detail.places.map(toPlace));
+        setItineraryPlaceIds(
+          Object.fromEntries(detail.places.map((p) => [p.place_id, p.itinerary_place_id])),
+        );
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        showToast({
+          variant: 'error',
+          message: toApiClientError(error).message ?? '담은 장소를 불러오지 못했어요.',
+        });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [itineraryId, showToast]);
 
   const savedByCategory = useMemo(() => {
     const grouped: Record<PlaceCategory, Place[]> = { restaurant: [], cafe: [], activity: [] };
@@ -169,7 +195,7 @@ export default function PlacePage() {
   const handleRemovePlace = async (place: Place) => {
     const itineraryPlaceId = itineraryPlaceIds[place.id];
     if (!itineraryPlaceId) {
-      setSavedPlaces((prev) => prev.filter((p) => p.id !== place.id));
+      showToast({ variant: 'error', message: '장소 정보를 찾지 못했어요. 새로고침 후 다시 시도해주세요.' });
       return;
     }
 
