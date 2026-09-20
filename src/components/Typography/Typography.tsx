@@ -1,4 +1,4 @@
-import type { ElementType, ReactNode } from 'react';
+import type { CSSProperties, ElementType, ReactNode } from 'react';
 import styles from './Typography.module.css';
 
 export type TypographyVariant = 'display' | 'h1' | 'h2' | 'h3' | 'body' | 'caption';
@@ -18,6 +18,7 @@ interface TypographyProps {
   as?: ElementType;
   color?: TypographyColor;
   className?: string;
+  style?: CSSProperties;
   children: ReactNode;
 }
 
@@ -26,10 +27,15 @@ export default function Typography({
   as,
   color = 'primary',
   className,
+  style,
   children,
 }: TypographyProps) {
   const Tag = as ?? DEFAULT_TAG[variant];
   const classes = [styles[variant], styles[`color-${color}`], className].filter(Boolean).join(' ');
 
-  return <Tag className={classes}>{children}</Tag>;
+  return (
+    <Tag className={classes} style={style}>
+      {children}
+    </Tag>
+  );
 }
