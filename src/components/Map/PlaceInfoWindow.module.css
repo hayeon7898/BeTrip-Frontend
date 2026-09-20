@@ -1,0 +1,97 @@
+/* 카카오맵 CustomOverlay는 xAnchor:0.5/yAnchor:1로 앵커 좌표(마커 위치)에 카드 하단-중앙을
+   맞춰주므로, 여기서는 핀 높이(28px)만큼만 margin-bottom으로 띄워 핀과 겹치지 않게 합니다. */
+.card {
+  position: relative;
+  width: 240px;
+  background: #fff;
+  border-radius: var(--radius-lg, 12px);
+  box-shadow:
+    0 4px 12px rgba(27, 28, 43, 0.18),
+    0 12px 32px rgba(27, 28, 43, 0.14);
+  padding: 12px;
+  margin-bottom: 34px;
+  box-sizing: border-box;
+  cursor: default;
+}
+
+.closeButton {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-sub-50);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closeButton:hover {
+  color: var(--color-text-primary, #1b1c2b);
+}
+
+.body {
+  display: flex;
+  gap: 10px;
+  padding-right: 20px;
+}
+
+.thumb,
+.thumbPlaceholder {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-md, 8px);
+  flex-shrink: 0;
+  object-fit: cover;
+  background: var(--color-sub-50);
+}
+
+.text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  justify-content: center;
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actionRow {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.mapLinkButton,
+.addButton {
+  flex: 1;
+}
+
+/* 카드 아래로 뻗어 핀을 가리키는 말풍선 꼬리 */
+.tail {
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  transform: translateX(-50%) rotate(45deg);
+  box-shadow: 2px 2px 3px rgba(27, 28, 43, 0.08);
+}

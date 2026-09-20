@@ -1,0 +1,459 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { FormEvent } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import Header from '../components/Header/Header';
+import SearchBar from '../components/SearchBar/SearchBar';
+import Typography from '../components/Typography/Typography';
+import Input from '../components/Input/Input';
+import Button from '../components/Button/Button';
+import PlaceCard from '../components/PlaceCard/PlaceCard';
+import PlaceListItem from '../components/PlaceListItem/PlaceListItem';
+import PlaceDetailModal from '../components/Modal/PlaceDetailModal';
+import { useToast } from '../components/Toast/useToast';
+import { CATEGORY_LABEL, CATEGORY_ORDER, mapApiPlace} from '../types/place';
+import type { Place, PlaceCategory} from '../types/place';
+import { addPlaceToItinerary, removePlaceFromItinerary } from '../api/place';
+import { generatePlan } from '../api/plan';
+import { toApiClientError } from '../api/client';
+import { getItineraryDetail } from '../api/itineraries';
+import type { ItineraryPlaceDetail } from '../api/itineraries';
+import { useSearchPlaces } from '../hooks/useSearchPlaces';
+import styles from './PlacePage.module.css';
+import { sendChatMessage } from '../api/chat';
+import ReactMarkdown from 'react-markdown';
+
+type ChatMessage =
+  | { id: string; role: 'ai' | 'user'; kind: 'text'; text: string }
+  | { id: string; role: 'ai'; kind: 'places'; places: Place[] };
+
+let messageId = 0;
+const nextId = () => `msg-${++messageId}`;
+
+// 상세조회 응답의 장소를 화면에서 쓰는 Place로 변환
+function toPlace(p: ItineraryPlaceDetail): Place {
+  return mapApiPlace({
+    place_id: p.place_id,
+    name: p.name,
+    category: p.category,
+    address: p.address,
+    thumbnail_url: p.thumbnail_url,
+    lat: p.lat,
+    lng: p.lng,
+  } as Parameters<typeof mapApiPlace>[0]);
+}
+
+export default function PlacePage() {
+  const { showToast } = useToast();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const itineraryId = searchParams.get('iId') ?? '';
+
+  // ---- 채팅(AI 추천) ----
+  const [chatValue, setChatValue] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    { id: nextId(), role: 'ai', kind: 'text', text: '어떤 여행 스타일을 원하세요?' },
+  ]);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // ---- 검색(지도 검색, 채팅과 완전히 별개) ----
+  const [searchValue, setSearchValue] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchWrapperRef = useRef<HTMLDivElement>(null);
+  const {
+    results: searchResults,
+    hasNext: searchHasNext,
+    isLoading: isSearchLoading,
+    isLoadingMore: isSearchLoadingMore,
+    search: runSearch,
+    containerRef: searchContainerRef,
+    sentinelRef: searchSentinelRef,
+  } = useSearchPlaces({
+    onError: (message) => showToast({ variant: 'error', message }),
+  });
+
+  // ---- 담은 장소 / 상세 모달 ----
+  const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
+  const [savedPlaces, setSavedPlaces] = useState<Place[]>([]);
+  // place_id -> itinerary_place_id. 제거(DELETE) 시 itinerary_place_id가 필요해서 따로 기억해둔다.
+  const [itineraryPlaceIds, setItineraryPlaceIds] = useState<Record<string, string>>({});
+
+  // useEffect(() => {
+  //   if (!itineraryId) {
+  //     showToast({
+  //       variant: 'error',
+  //       message: '일정 정보를 찾을 수 없어요. 처음부터 다시 시도해주세요.',
+  //     });
+  //   }
+  // }, [itineraryId, showToast]);
+
+  // 새로고침/재진입 시 서버에 저장된 담은 장소를 복원
+  useEffect(() => {
+    if (!itineraryId) return;
+    let cancelled = false;
+
+    getItineraryDetail(itineraryId)
+      .then((detail) => {
+        if (cancelled) return;
+        setSavedPlaces(detail.places.map(toPlace));
+        setItineraryPlaceIds(
+          Object.fromEntries(detail.places.map((p) => [p.place_id, p.itinerary_place_id])),
+        );
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        showToast({
+          variant: 'error',
+          message: toApiClientError(error).message ?? '담은 장소를 불러오지 못했어요.',
+        });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [itineraryId, showToast]);
+
+  const savedByCategory = useMemo(() => {
+    const grouped: Record<PlaceCategory, Place[]> = { restaurant: [], cafe: [], activity: [] };
+    savedPlaces.forEach((place) => grouped[place.category].push(place));
+    return grouped;
+  }, [savedPlaces]);
+
+  const isSaved = (place: Place) => savedPlaces.some((p) => p.id === place.id);
+
+  const scrollChatToEnd = () => {
+    requestAnimationFrame(() => {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    });
+  };
+
+  const pushMessage = (message: ChatMessage) => {
+    setMessages((prev) => [...prev, message]);
+    scrollChatToEnd();
+  };
+
+  // 채팅 -> /itineraries/{iId}/places/recommend (카테고리 기반 추천)
+  const handleChatSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const text = chatValue.trim();
+    if (!text) return;
+
+    pushMessage({ id: nextId(), role: 'user', kind: 'text', text });
+    setChatValue('');
+
+    setIsTyping(true);
+    try {
+      const { reply, places } = await sendChatMessage(itineraryId, text);
+      setIsTyping(false);
+
+      pushMessage({ id: nextId(), role: 'ai', kind: 'text', text: reply });
+
+      if (places.length > 0) {
+        pushMessage({ id: nextId(), role: 'ai', kind: 'places', places });
+      }
+    } catch (error) {
+      setIsTyping(false);
+      const apiError = toApiClientError(error);
+      pushMessage({
+        id: nextId(),
+        role: 'ai',
+        kind: 'text',
+        text: apiError.message ?? '메시지를 처리하지 못했어요. 잠시 후 다시 시도해주세요.',
+      });
+    }
+  };
+
+  // 검색바 -> /map/search (드롭다운으로 결과 표시, 채팅과 무관)
+  // 직전과 같은 검색어 재요청 방지, 로딩/에러 처리는 useSearchPlaces 훅이 담당
+  const handleSearchSubmit = async (query: string) => {
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    setIsSearchOpen(true);
+    await runSearch(trimmed);
+  };
+
+  const handleAddPlace = async (place: Place) => {
+    if (isSaved(place)) return;
+
+    try {
+      const itineraryPlaceId = await addPlaceToItinerary(itineraryId, place.id);
+      setSavedPlaces((prev) => [...prev, place]);
+      setItineraryPlaceIds((prev) => ({ ...prev, [place.id]: itineraryPlaceId }));
+      showToast({
+        variant: 'info',
+        message: `${place.name}을(를) ${CATEGORY_LABEL[place.category]}에 담았어요`,
+      });
+    } catch (error) {
+      const apiError = toApiClientError(error);
+      showToast({
+        variant: 'error',
+        message: apiError.message ?? '장소를 담지 못했어요. 잠시 후 다시 시도해주세요.',
+      });
+    }
+  };
+
+  const handleRemovePlace = async (place: Place) => {
+    const itineraryPlaceId = itineraryPlaceIds[place.id];
+    if (!itineraryPlaceId) {
+      showToast({ variant: 'error', message: '장소 정보를 찾지 못했어요. 새로고침 후 다시 시도해주세요.' });
+      return;
+    }
+
+    try {
+      await removePlaceFromItinerary(itineraryId, itineraryPlaceId);
+      setSavedPlaces((prev) => prev.filter((p) => p.id !== place.id));
+      setItineraryPlaceIds((prev) => {
+        const next = { ...prev };
+        delete next[place.id];
+        return next;
+      });
+    } catch (error) {
+      const apiError = toApiClientError(error);
+      showToast({
+        variant: 'error',
+        message: apiError.message ?? '장소를 제거하지 못했어요. 잠시 후 다시 시도해주세요.',
+      });
+    }
+  };
+
+  const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
+
+  const handleGoToPlan = async () => {
+    setIsGeneratingPlan(true);
+    try {
+      await generatePlan(itineraryId);
+      navigate(`/plan/${itineraryId}`);
+    } catch {
+      showToast({ variant: 'error', message: '일정 생성에 실패했어요. 잠시 후 다시 시도해주세요' });
+    } finally {
+      setIsGeneratingPlan(false);
+    }
+  };
+
+  return (
+    <div className={styles.page}>
+      <Header />
+
+      <div className={styles.content}>
+      <div className={styles.searchRow}>
+        <div className={styles.searchWrapper} ref={searchWrapperRef}>
+          <SearchBar
+            value={searchValue}
+            onChange={setSearchValue}
+            onSubmit={handleSearchSubmit}
+            placeholder="장소, 맛집, 카페 검색해서 바로 추가해보세요"
+            className={styles.searchBar}
+          />
+
+          {isSearchOpen && (
+  <div className={styles.searchDropdown} ref={searchContainerRef}>
+    <div className={styles.searchDropdownHeader}>
+      <Typography variant="caption" color="tertiary">
+        {isSearchLoading ? '검색 중...' : `검색 결과 ${searchResults.length}건`}
+      </Typography>
+      <button
+        type="button"
+        className={styles.searchDropdownClose}
+        onClick={() => setIsSearchOpen(false)}
+        aria-label="검색 결과 닫기"
+      >
+        ×
+      </button>
+    </div>
+
+      {isSearchLoading ? (
+        <div className={styles.searchDropdownList}>
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className={styles.skeletonItem}>
+              <div className={styles.skeletonThumb} />
+              <div className={styles.skeletonLines}>
+                <div className={styles.skeletonLine} style={{ width: '55%' }} />
+                <div className={styles.skeletonLine} style={{ width: '35%' }} />
+              </div>
+            </div>
+          ))}
+        </div>
+          ) : searchResults.length === 0 ? (
+            <div className={styles.searchDropdownEmpty}>
+              <Typography variant="caption" color="tertiary">
+                검색 결과가 없어요
+              </Typography>
+            </div>
+          ) : (
+            <div className={styles.searchDropdownList}>
+              {searchResults.map((place) => (
+                <PlaceListItem
+                  key={place.id}
+                  place={place}
+                  variant="comfortable"
+                  onClick={setSelectedPlace}
+                />
+              ))}
+              {isSearchLoadingMore &&
+                Array.from({ length: searchResults.length % 2 === 0 ? 2 : 1 }).map((_, i) => (
+                  <div key={i} className={styles.skeletonItem}>
+                    <div className={styles.skeletonThumb} />
+                    <div className={styles.skeletonLines}>
+                      <div className={styles.skeletonLine} style={{ width: '55%' }} />
+                      <div className={styles.skeletonLine} style={{ width: '35%' }} />
+                    </div>
+                  </div>
+                ))}
+              {searchHasNext && (
+                <div
+                  ref={searchSentinelRef}
+                  aria-hidden
+                  style={{ gridColumn: '1 / -1', height: 1 }}
+                />
+              )}
+            </div>
+          )}
+        </div>
+      )}
+      </div>
+    </div>
+      <div className={styles.main}>
+        <div className={styles.chatPanel}>
+          <div className={styles.panelHeader}>
+            <Typography variant="h2">AI 추천</Typography>
+            <Typography variant="caption" color="tertiary">
+              원하는 조건을 말해보세요
+            </Typography>
+          </div>
+
+          <div className={styles.chatScroll}>
+            {messages.map((message) => {
+              if (message.kind === 'places') {
+                return (
+                  <div key={message.id} className={styles.placeCardRow}>
+                    {message.places.map((place) => (
+                      <PlaceCard
+                        key={place.id}
+                        place={place}
+                        added={isSaved(place)}
+                        onAdd={handleAddPlace}
+                        onClick={setSelectedPlace}
+                      />
+                    ))}
+                  </div>
+                );
+              }
+              return (
+                <div
+                  key={message.id}
+                  className={message.role === 'ai' ? styles.aiBubbleRow : styles.userBubbleRow}
+                >
+                  <Typography
+                    variant="body"
+                    as={message.role === 'ai' ? 'div' : undefined}
+                    className={message.role === 'ai' ? styles.aiBubble : styles.userBubble}
+                  >
+                    {message.role === 'ai' ? (
+                      <ReactMarkdown
+                        components={{
+                          p: ({ children }) => <p style={{ margin: '4px 0' }}>{children}</p>,
+                        }}
+                      >
+                        {message.text}
+                      </ReactMarkdown>
+                    ) : (
+                      message.text
+                    )}
+                  </Typography>
+                </div>
+              );
+            })}
+
+            {isTyping && (
+              <div className={styles.aiBubbleRow}>
+                <div className={styles.typingBubble}>
+                  <span className={styles.typingDot} />
+                  <span className={styles.typingDot} />
+                  <span className={styles.typingDot} />
+                </div>
+              </div>
+            )}
+
+            <div ref={chatEndRef} />
+          </div>
+
+          <form className={styles.chatInputRow} onSubmit={handleChatSubmit}>
+            <Input
+              value={chatValue}
+              onChange={(event) => setChatValue(event.target.value)}
+              placeholder="메시지를 입력하세요"
+              className={styles.chatInput}
+            />
+            <Button type="submit" variant="primary" size="md" aria-label="전송">
+              ↑
+            </Button>
+          </form>
+        </div>
+
+        <div className={styles.savedPanel}>
+          <div className={styles.panelHeader}>
+            <Typography variant="h2">담은 장소</Typography>
+            <Typography variant="caption" color="tertiary">
+              카테고리별로 모아서 보여드려요
+            </Typography>
+          </div>
+
+          <div className={styles.categoryList}>
+            {CATEGORY_ORDER.map((category) => {
+              const places = savedByCategory[category];
+              return (
+                <div key={category} className={styles.categorySection}>
+                  <div className={styles.categorySectionHeader}>
+                    <Typography variant="h3">{CATEGORY_LABEL[category]}</Typography>
+                    <Typography variant="caption" color="tertiary">
+                      {places.length}곳
+                    </Typography>
+                  </div>
+
+                  {places.length === 0 ? (
+                    <div className={styles.emptyState}>
+                      <Typography variant="caption" color="tertiary">
+                        아직 담은 {CATEGORY_LABEL[category]}이(가) 없어요
+                      </Typography>
+                    </div>
+                  ) : (
+                    <div className={styles.categoryItemList}>
+                      {places.map((place) => (
+                        <PlaceListItem
+                          key={place.id}
+                          place={place}
+                          onClick={setSelectedPlace}
+                          onRemove={handleRemovePlace}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className={styles.savedPanelFooter}>
+            <Button
+              variant="primary"
+              size="md"
+              className={styles.goToPlanButton}
+              onClick={handleGoToPlan}
+              disabled={savedPlaces.length === 0 || isGeneratingPlan}
+            >
+              {isGeneratingPlan ? '일정 생성 중...' : '일정 만들기'}
+            </Button>
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <PlaceDetailModal
+        place={selectedPlace}
+        added={selectedPlace ? isSaved(selectedPlace) : false}
+        onAdd={handleAddPlace}
+        onClose={() => setSelectedPlace(null)}
+      />
+    </div>
+  );
+}

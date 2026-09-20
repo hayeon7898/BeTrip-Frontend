@@ -1,0 +1,18 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.panel {
+  background: var(--color-white);
+  border-radius: var(--radius-xl);
+  padding: 28px;
+  max-width: 320px;
+  width: 90%;
+  text-align: center;
+}
