@@ -1,6 +1,8 @@
 # 1단계: 빌드
 FROM node:20-slim AS build
 WORKDIR /app
+ARG VITE_KAKAO_MAP_KEY
+ENV VITE_KAKAO_MAP_KEY=$VITE_KAKAO_MAP_KEY
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
